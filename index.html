@@ -1103,47 +1103,50 @@
     function drawFlock() {
       if (!flockActive || flockBirds.length === 0) return;
       const cx2 = vw / 2, cy2 = vh / 2;
-      const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
-      const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
+      const rx2 = vw * 0.35, ry2 = vh * 0.25;
+      const bx = cx2 + Math.cos(birdTime) * rx2;
+      const by = cy2 + Math.sin(birdTime * 2) * ry2;
+      const leaderVx = -Math.sin(birdTime) * rx2 * 0.005;
+      const leaderVy = Math.cos(birdTime * 2) * ry2 * 0.01;
+      const leaderTilt = Math.atan2(leaderVy, Math.abs(leaderVx)) * 30;
+      const leaderDir = leaderVx > 0 ? 1 : -1;
 
       flockBirds.forEach((b, i) => {
-        // Follow leader loosely
-        const dx = bx - b.x, dy = by - b.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        b.vx += dx / dist * 0.04;
-        b.vy += dy / dist * 0.04;
+        // Target position: offset behind leader
+        const offsetAngle = birdTime - (i + 1) * 0.12;
+        const spreadX = 60 + i * 25;
+        const spreadY = (Math.sin(i * 2.5) * 50) + (i % 2 === 0 ? -40 : 40);
+        const tx = bx - leaderDir * spreadX + Math.sin(offsetAngle * 2) * spreadY;
+        const ty = by + Math.cos(offsetAngle * 3) * spreadY * 0.6;
 
-        // Separation - push away from other birds
+        // Smooth follow
+        b.vx += (tx - b.x) * 0.02;
+        b.vy += (ty - b.y) * 0.02;
+
+        // Separation
         flockBirds.forEach((other, j) => {
           if (i === j) return;
           const sx = b.x - other.x, sy = b.y - other.y;
           const sd = Math.hypot(sx, sy) || 1;
-          if (sd < 120) {
-            const force = (120 - sd) / 120 * 0.8;
+          if (sd < 80) {
+            const force = (80 - sd) / 80 * 0.5;
             b.vx += (sx / sd) * force;
             b.vy += (sy / sd) * force;
           }
         });
 
-        // Random wander
-        b.vx += (Math.random() - 0.5) * 0.8;
-        b.vy += (Math.random() - 0.5) * 0.6;
-        b.vx *= 0.95; b.vy *= 0.95;
+        b.vx *= 0.92; b.vy *= 0.92;
         b.x += b.vx; b.y += b.vy;
 
-        // Wrap around screen
-        if (b.x < -60) b.x = vw + 60;
-        if (b.x > vw + 60) b.x = -60;
-        if (b.y < -60) b.y = vh + 60;
-        if (b.y > vh + 60) b.y = -60;
-
-        b.tilt = Math.atan2(b.vy, Math.abs(b.vx)) * 30;
-        const scaleX = b.vx > 0 ? 1 : -1;
+        if (b.x < -80) b.x = vw + 80;
+        if (b.x > vw + 80) b.x = -80;
+        if (b.y < -80) b.y = vh + 80;
+        if (b.y > vh + 80) b.y = -80;
 
         skyCtx.save();
         skyCtx.translate(b.x, b.y);
-        skyCtx.scale(scaleX * b.scale, b.scale);
-        skyCtx.rotate(b.tilt * Math.PI / 180);
+        skyCtx.scale(leaderDir * b.scale, b.scale);
+        skyCtx.rotate(leaderTilt * Math.PI / 180);
         skyCtx.drawImage(birdCanvas, -SIZE / 2, -SIZE / 2, SIZE, SIZE);
         skyCtx.restore();
       });

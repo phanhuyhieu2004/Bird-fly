@@ -14,7 +14,6 @@
       height: 100vh;
       overflow: hidden;
       font-family: 'Quicksand', sans-serif;
-      cursor: default;
     }
 
     #sky-canvas {
@@ -128,75 +127,6 @@
     }
     .ctrl-btn:active { transform: scale(0.95); }
 
-    .title-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      background: rgba(0,0,0,0.4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      transition: opacity 0.8s ease, visibility 0.8s ease;
-    }
-    .title-overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .title-overlay h1 {
-      font-size: 3rem;
-      font-weight: 300;
-      color: white;
-      letter-spacing: 8px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
-    }
-
-    .title-overlay p {
-      font-size: 1rem;
-      color: rgba(255,255,255,0.7);
-      letter-spacing: 4px;
-      margin-bottom: 50px;
-    }
-
-    .start-btn {
-      padding: 14px 48px;
-      border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 40px;
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: white;
-      font-family: 'Quicksand', sans-serif;
-      font-size: 1rem;
-      font-weight: 500;
-      letter-spacing: 4px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .start-btn:hover {
-      background: rgba(255,255,255,0.25);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .cute-emoji {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
     .now-playing {
       position: fixed;
       top: 25px;
@@ -208,10 +138,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      opacity: 0;
-      transition: opacity 0.5s;
     }
-    .now-playing.show { opacity: 1; }
 
     .now-playing .bars {
       display: flex;
@@ -234,27 +161,9 @@
       0% { transform: scaleY(0.5); }
       100% { transform: scaleY(1.2); }
     }
-
-    .hint {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: rgba(255,255,255,0.35);
-      font-size: 0.7rem;
-      letter-spacing: 3px;
-      z-index: 10;
-    }
   </style>
 </head>
 <body>
-  <div class="title-overlay" id="overlay">
-    <div class="cute-emoji">&#127912;</div>
-    <h1>Bird Fly</h1>
-    <p>relax &amp; enjoy</p>
-    <button class="start-btn" id="start-btn">BAY NAO</button>
-  </div>
-
   <canvas id="sky-canvas"></canvas>
   <canvas id="particle-canvas"></canvas>
 
@@ -279,14 +188,47 @@
     <button class="ctrl-btn" id="speed-btn" title="Change speed" style="font-size:14px;">1x</button>
   </div>
 
-  <div class="hint">hover anywhere for magic</div>
-
-  <audio id="bgm" loop preload="auto">
+  <audio id="bgm" loop autoplay preload="auto">
     <source src="Arena%20of%20Valor%20-%20%E5%82%B3%E8%AA%AA%E5%B0%8D%E6%B1%BA%20_%20HERO%20MUSIC%20_%20Dolia%20_%20Original%20Sound%20Track%20%5BnZagrNVWnVo%5D.mp3" type="audio/mpeg">
   </audio>
 
   <script src="https://unpkg.com/@rive-app/canvas/rive.js"></script>
   <script>
+    const bgm = document.getElementById('bgm');
+    bgm.volume = 0.5;
+    let musicOn = true;
+
+    bgm.play().then(() => {
+      document.getElementById('now-playing').classList.add('show');
+    }).catch(() => {
+      musicOn = false;
+      const tryPlay = () => {
+        bgm.play().then(() => {
+          musicOn = true;
+          document.getElementById('now-playing').classList.add('show');
+        }).catch(() => {});
+        document.removeEventListener('click', tryPlay);
+        document.removeEventListener('touchstart', tryPlay);
+      };
+      document.addEventListener('click', tryPlay);
+      document.addEventListener('touchstart', tryPlay);
+    });
+
+    document.getElementById('music-btn').addEventListener('click', () => {
+      if (musicOn) {
+        bgm.pause();
+        musicOn = false;
+        document.getElementById('music-btn').innerHTML = '&#9835;';
+        document.getElementById('now-playing').style.display = 'none';
+      } else {
+        bgm.play().then(() => {
+          musicOn = true;
+          document.getElementById('music-btn').innerHTML = '&#9834;';
+          document.getElementById('now-playing').style.display = '';
+        }).catch(() => {});
+      }
+    });
+
     const skyCanvas = document.getElementById('sky-canvas');
     const skyCtx = skyCanvas.getContext('2d');
     const particleCanvas = document.getElementById('particle-canvas');
@@ -386,8 +328,7 @@
       }
 
       if (cycle < 0.15 || cycle > 0.8) {
-        const stars = 60;
-        for (let i = 0; i < stars; i++) {
+        for (let i = 0; i < 60; i++) {
           const sx = (Math.sin(i * 127.1) * 0.5 + 0.5) * w;
           const sy = (Math.sin(i * 311.7) * 0.5 + 0.5) * h * 0.6;
           const sa = (Math.sin(time * 2 + i) * 0.3 + 0.5) * 0.6;
@@ -405,9 +346,7 @@
       for (let x = 0; x <= w; x += 2) {
         skyCtx.lineTo(x, mY + Math.sin(x * 0.003) * 30 + Math.sin(x * 0.007) * 15);
       }
-      skyCtx.lineTo(w, h);
-      skyCtx.lineTo(0, h);
-      skyCtx.fill();
+      skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
 
       skyCtx.fillStyle = cycle > 0.8 || cycle < 0.15 ? 'rgba(15,20,30,0.7)' : 'rgba(40,70,40,0.4)';
       skyCtx.beginPath();
@@ -415,55 +354,28 @@
       for (let x = 0; x <= w; x += 2) {
         skyCtx.lineTo(x, mY + 50 + Math.sin(x * 0.004 + 1) * 25 + Math.sin(x * 0.009 + 2) * 12);
       }
-      skyCtx.lineTo(w, h);
-      skyCtx.lineTo(0, h);
-      skyCtx.fill();
+      skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
     }
 
     const birdParticles = [];
     const floatingParticles = [];
-    let mouseX = vw / 2, mouseY = vh / 2;
-    let useMouseControl = false;
-
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    });
-
-    document.addEventListener('touchmove', (e) => {
-      mouseX = e.touches[0].clientX;
-      mouseY = e.touches[0].clientY;
-    });
 
     function loop() {
       time += 0.003 * speedMultiplier;
       drawSky(time);
 
-      let birdX, birdY;
-
-      if (useMouseControl) {
-        const targetX = mouseX;
-        const targetY = mouseY;
-        birdX = vw / 2 + (targetX - vw / 2) * 0.15;
-        birdY = vh / 2 + (targetY - vh / 2) * 0.15;
-      } else {
-        const cx = vw / 2;
-        const cy = vh / 2;
-        const rx = vw * 0.35;
-        const ry = vh * 0.25;
-        birdX = cx + Math.cos(time) * rx;
-        birdY = cy + Math.sin(time * 2) * ry;
-      }
-
+      const cx = vw / 2, cy = vh / 2;
+      const rx = vw * 0.35, ry = vh * 0.25;
+      const birdX = cx + Math.cos(time) * rx;
+      const birdY = cy + Math.sin(time * 2) * ry;
       const goingRight = Math.sin(time) < 0;
       const goingUp = Math.cos(time * 2) < 0;
       const tilt = goingUp ? -10 : 10;
       const scaleX = goingRight ? 1 : -1;
-      const displayAngle = goingRight ? tilt : -tilt;
 
       birdCanvas.style.left = (birdX - SIZE / 2) + 'px';
       birdCanvas.style.top = (birdY - SIZE / 2) + 'px';
-      birdCanvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + displayAngle + 'deg)';
+      birdCanvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + (goingRight ? tilt : -tilt) + 'deg)';
 
       stripCtx.clearRect(0, 0, SIZE, SIZE);
       stripCtx.drawImage(riveCanvas, 0, 0, SIZE, SIZE);
@@ -475,7 +387,6 @@
           if (d[i+3] > 10) { bgColor = [d[i], d[i+1], d[i+2]]; break; }
         }
       }
-
       if (bgColor) {
         const [br, bg, bb] = bgColor;
         for (let i = 0; i < d.length; i += 4) {
@@ -502,10 +413,7 @@
       trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
       for (let i = birdParticles.length - 1; i >= 0; i--) {
         const p = birdParticles[i];
-        p.life -= 0.015;
-        p.alpha = p.life * 0.35;
-        p.size *= 0.99;
-        p.y -= 0.2;
+        p.life -= 0.015; p.alpha = p.life * 0.35; p.size *= 0.99; p.y -= 0.2;
         if (p.life <= 0) { birdParticles.splice(i, 1); continue; }
         trailCtx.beginPath();
         trailCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -515,13 +423,9 @@
 
       if (Math.random() < 0.08) {
         floatingParticles.push({
-          x: Math.random() * vw,
-          y: vh + 10,
-          size: Math.random() * 3 + 1,
-          alpha: Math.random() * 0.3 + 0.1,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: -(Math.random() * 0.4 + 0.2),
-          life: 1,
+          x: Math.random() * vw, y: vh + 10,
+          size: Math.random() * 3 + 1, alpha: Math.random() * 0.3 + 0.1,
+          vx: (Math.random() - 0.5) * 0.3, vy: -(Math.random() * 0.4 + 0.2), life: 1,
         });
         if (floatingParticles.length > 50) floatingParticles.shift();
       }
@@ -530,9 +434,7 @@
       for (let i = floatingParticles.length - 1; i >= 0; i--) {
         const p = floatingParticles[i];
         p.x += p.vx + Math.sin(time * 3 + i) * 0.15;
-        p.y += p.vy;
-        p.life -= 0.003;
-        p.alpha = p.life * 0.3;
+        p.y += p.vy; p.life -= 0.003; p.alpha = p.life * 0.3;
         if (p.life <= 0 || p.y < -10) { floatingParticles.splice(i, 1); continue; }
         particleCtx.beginPath();
         particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -544,34 +446,6 @@
     }
     requestAnimationFrame(loop);
 
-    const bgm = document.getElementById('bgm');
-    bgm.volume = 0.5;
-    let musicOn = false;
-
-    document.getElementById('start-btn').addEventListener('click', () => {
-      document.getElementById('overlay').classList.add('hidden');
-      bgm.play().then(() => {
-        musicOn = true;
-        document.getElementById('music-btn').innerHTML = '&#9834;';
-        document.getElementById('now-playing').classList.add('show');
-      }).catch(() => {});
-    });
-
-    document.getElementById('music-btn').addEventListener('click', () => {
-      if (musicOn) {
-        bgm.pause();
-        musicOn = false;
-        document.getElementById('music-btn').innerHTML = '&#9835;';
-        document.getElementById('now-playing').classList.remove('show');
-      } else {
-        bgm.play().then(() => {
-          musicOn = true;
-          document.getElementById('music-btn').innerHTML = '&#9834;';
-          document.getElementById('now-playing').classList.add('show');
-        }).catch(() => {});
-      }
-    });
-
     const speeds = [0.5, 1, 1.5, 2];
     let speedIdx = 1;
     document.getElementById('speed-btn').addEventListener('click', () => {
@@ -579,9 +453,6 @@
       speedMultiplier = speeds[speedIdx];
       document.getElementById('speed-btn').textContent = speeds[speedIdx] + 'x';
     });
-
-    document.addEventListener('mouseenter', () => { useMouseControl = false; });
-    document.addEventListener('mouseleave', () => { useMouseControl = false; });
   </script>
 </body>
 </html>

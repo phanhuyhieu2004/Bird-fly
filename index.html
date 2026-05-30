@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bird Fly</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(180deg, #87CEEB 0%, #E0F0FF 40%, #FFF8E7 70%, #FFE4B5 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .clouds {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+      filter: blur(1px);
+    }
+    .cloud::before, .cloud::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.8);
+      border-radius: 50%;
+    }
+
+    .cloud-1 { width: 120px; height: 50px; top: 8%; left: -150px; animation: drift 25s linear infinite; }
+    .cloud-1::before { width: 60px; height: 60px; top: -30px; left: 20px; }
+    .cloud-1::after { width: 80px; height: 50px; top: -20px; left: 50px; }
+
+    .cloud-2 { width: 160px; height: 60px; top: 20%; left: -200px; animation: drift 35s linear infinite 5s; }
+    .cloud-2::before { width: 80px; height: 70px; top: -35px; left: 30px; }
+    .cloud-2::after { width: 100px; height: 60px; top: -25px; left: 70px; }
+
+    .cloud-3 { width: 100px; height: 40px; top: 35%; left: -130px; animation: drift 30s linear infinite 12s; }
+    .cloud-3::before { width: 50px; height: 50px; top: -25px; left: 15px; }
+    .cloud-3::after { width: 70px; height: 40px; top: -15px; left: 40px; }
+
+    @keyframes drift {
+      from { transform: translateX(0); }
+      to { transform: translateX(calc(100vw + 300px)); }
+    }
+
+    #trail-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #bird-canvas {
+      position: fixed;
+      width: 220px;
+      height: 220px;
+      z-index: 1;
+      filter: drop-shadow(0 8px 20px rgba(0,0,0,0.15));
+    }
+
+    #rive-canvas {
+      position: fixed;
+      width: 220px;
+      height: 220px;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="clouds">
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+  </div>
+
+  <canvas id="trail-canvas"></canvas>
+  <canvas id="bird-canvas"></canvas>
+  <canvas id="rive-canvas"></canvas>
+
+  <script src="rive.js"></script>
+  <script>
+    const canvas = document.getElementById('bird-canvas');
+    const ctx = canvas.getContext('2d');
+    const SIZE = 400;
+    canvas.width = SIZE;
+    canvas.height = SIZE;
+
+    const trailCanvas = document.getElementById('trail-canvas');
+    trailCanvas.width = window.innerWidth;
+    trailCanvas.height = window.innerHeight;
+    const trailCtx = trailCanvas.getContext('2d');
+
+    const riveCanvas = document.getElementById('rive-canvas');
+    riveCanvas.width = SIZE;
+    riveCanvas.height = SIZE;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let birdX = -200;
+    let birdY = vh / 2;
+    let time = 0;
+    let bgColor = null;
+
+    const particles = [];
+    const MAX_PARTICLES = 30;
+
+    new rive.Rive({
+      src: 'birdfly.riv',
+      canvas: riveCanvas,
+      autoplay: true,
+      stateMachines: 'State Machine 1',
+      fit: rive.Fit.Contain,
+      alignment: rive.Alignment.Center,
+    });
+
+    const stripCanvas = document.createElement('canvas');
+    stripCanvas.width = SIZE;
+    stripCanvas.height = SIZE;
+    const stripCtx = stripCanvas.getContext('2d');
+
+    function spawnParticle(x, y) {
+      particles.push({
+        x: x + (Math.random() - 0.5) * 20,
+        y: y + (Math.random() - 0.5) * 20,
+        size: Math.random() * 8 + 4,
+        alpha: 0.6,
+        life: 1,
+      });
+      if (particles.length > MAX_PARTICLES) particles.shift();
+    }
+
+    function loop() {
+      time += 0.006;
+
+      const cx = vw / 2;
+      const cy = vh / 2;
+      const rx = vw * 0.4;
+      const ry = vh * 0.3;
+
+      birdX = cx + Math.cos(time) * rx;
+      birdY = cy + Math.sin(time * 2) * ry;
+
+      const goingRight = Math.sin(time) < 0;
+      const goingUp = Math.cos(time * 2) < 0;
+
+      let tilt = goingUp ? -12 : 12;
+      const scaleX = goingRight ? 1 : -1;
+      const displayAngle = goingRight ? tilt : -tilt;
+
+      canvas.style.left = (birdX - SIZE / 2) + 'px';
+      canvas.style.top = (birdY - SIZE / 2) + 'px';
+      canvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + displayAngle + 'deg)';
+
+      stripCtx.clearRect(0, 0, SIZE, SIZE);
+      stripCtx.drawImage(riveCanvas, 0, 0, SIZE, SIZE);
+
+      const img = stripCtx.getImageData(0, 0, SIZE, SIZE);
+      const d = img.data;
+
+      if (!bgColor) {
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i+3] > 10) { bgColor = [d[i], d[i+1], d[i+2]]; break; }
+        }
+      }
+
+      if (bgColor) {
+        const [br, bg, bb] = bgColor;
+        for (let i = 0; i < d.length; i += 4) {
+          if (d[i+3] > 0 && Math.abs(d[i]-br) < 25 && Math.abs(d[i+1]-bg) < 25 && Math.abs(d[i+2]-bb) < 25) {
+            d[i+3] = 0;
+          }
+        }
+      }
+
+      ctx.clearRect(0, 0, SIZE, SIZE);
+      ctx.putImageData(img, 0, 0);
+
+      if (Math.random() < 0.5) spawnParticle(birdX, birdY);
+
+      trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= 0.02;
+        p.alpha = p.life * 0.4;
+        p.size *= 0.98;
+        p.y -= 0.3;
+
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+        trailCtx.beginPath();
+        trailCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        trailCtx.fillStyle = 'rgba(255, 220, 100, ' + p.alpha + ')';
+        trailCtx.fill();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

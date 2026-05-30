@@ -790,9 +790,39 @@
 
     const birdParticles = [];
     const floatingParticles = [];
+    const birdBurstParticles = [];
 
     let skyTime = 0;
     let birdTime = 0;
+    let birdSpin = 0;
+    let birdBounce = 0;
+    let mouseX = -1000, mouseY = -1000;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX; mouseY = e.clientY;
+    });
+    document.addEventListener('click', (e) => {
+      const cx2 = vw / 2, cy2 = vh / 2;
+      const rx2 = vw * 0.35, ry2 = vh * 0.25;
+      const bx = cx2 + Math.cos(birdTime) * rx2;
+      const by = cy2 + Math.sin(birdTime * 2) * ry2;
+      const dist = Math.hypot(e.clientX - bx, e.clientY - by);
+      if (dist < 80) {
+        birdSpin = Math.PI * 2;
+        birdBounce = 15;
+        for (let i = 0; i < 25; i++) {
+          const angle = (i / 25) * Math.PI * 2;
+          const speed = 1.5 + Math.random() * 3;
+          const colors = ['255,220,100','255,180,180','180,255,200','255,255,180'];
+          birdBurstParticles.push({
+            x: bx, y: by,
+            vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+            size: 2 + Math.random() * 3, alpha: 1, life: 1,
+            color: colors[Math.floor(Math.random() * colors.length)],
+          });
+        }
+      }
+    });
 
     function loop() {
       skyTime += 0.001 * speedMultiplier;
@@ -801,16 +831,47 @@
 
       const cx = vw / 2, cy = vh / 2;
       const rx = vw * 0.35, ry = vh * 0.25;
-      const birdX = cx + Math.cos(birdTime) * rx;
-      const birdY = cy + Math.sin(birdTime * 2) * ry;
+      let birdX = cx + Math.cos(birdTime) * rx;
+      let birdY = cy + Math.sin(birdTime * 2) * ry;
+
+      // Mouse hover near bird → speed boost + sparkle
+      const distToMouse = Math.hypot(mouseX - birdX, mouseY - birdY);
+      if (distToMouse < 120) {
+        birdTime += 0.003;
+        if (Math.random() < 0.4) {
+          birdBurstParticles.push({
+            x: birdX + (Math.random() - 0.5) * 40,
+            y: birdY + (Math.random() - 0.5) * 40,
+            vx: (Math.random() - 0.5) * 2, vy: -(Math.random() * 2 + 0.5),
+            size: 1.5 + Math.random() * 2, alpha: 0.8, life: 1,
+            color: '255,255,200',
+          });
+        }
+      }
+
+      // Bird bounce
+      if (birdBounce > 0) {
+        birdY -= birdBounce * Math.sin(birdBounce * 0.5);
+        birdBounce *= 0.85;
+        if (birdBounce < 0.5) birdBounce = 0;
+      }
+
       const goingRight = Math.sin(birdTime) < 0;
       const goingUp = Math.cos(birdTime * 2) < 0;
       const tilt = goingUp ? -10 : 10;
       const scaleX = goingRight ? 1 : -1;
 
+      // Bird spin
+      let spinDeg = 0;
+      if (birdSpin > 0) {
+        spinDeg = (birdSpin / (Math.PI * 2)) * 360;
+        birdSpin -= 0.08;
+        if (birdSpin < 0) birdSpin = 0;
+      }
+
       birdCanvas.style.left = (birdX - SIZE / 2) + 'px';
       birdCanvas.style.top = (birdY - SIZE / 2) + 'px';
-      birdCanvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + (goingRight ? tilt : -tilt) + 'deg)';
+      birdCanvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + ((goingRight ? tilt : -tilt) + spinDeg) + 'deg)';
 
       stripCtx.clearRect(0, 0, SIZE, SIZE);
       stripCtx.drawImage(riveCanvas, 0, 0, SIZE, SIZE);
@@ -855,6 +916,26 @@
         trailCtx.fillStyle = 'rgba(255,220,120,' + p.alpha + ')';
         trailCtx.fill();
       }
+
+      // Bird burst particles
+      for (let i = birdBurstParticles.length - 1; i >= 0; i--) {
+        const p = birdBurstParticles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.05; p.vx *= 0.97; p.vy *= 0.97;
+        p.life -= 0.025; p.alpha = p.life * 0.8;
+        p.size *= 0.97;
+        if (p.life <= 0) { birdBurstParticles.splice(i, 1); continue; }
+        trailCtx.globalAlpha = p.alpha;
+        trailCtx.fillStyle = 'rgb(' + p.color + ')';
+        trailCtx.beginPath();
+        trailCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        trailCtx.fill();
+        trailCtx.globalAlpha = p.alpha * 0.3;
+        trailCtx.beginPath();
+        trailCtx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        trailCtx.fill();
+      }
+      trailCtx.globalAlpha = 1;
 
       if (Math.random() < 0.08) {
         floatingParticles.push({

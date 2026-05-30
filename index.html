@@ -234,150 +234,336 @@
     function drawSky(t) {
       const w = skyCanvas.width, h = skyCanvas.height;
       const cycle = t % 1;
+      const isNight = cycle > 0.8 || cycle < 0.15;
+      const isDawn = cycle > 0.12 && cycle < 0.25;
+      const isDusk = cycle > 0.72 && cycle < 0.85;
 
+      // 5-stop gradient sky
       const topColors = [
-        [10, 10, 40],
-        [180, 120, 100],
-        [100, 180, 255],
-        [200, 100, 60],
-        [10, 10, 40],
+        [5, 5, 30], [160, 100, 80], [70, 140, 230], [180, 80, 50], [5, 5, 30],
       ];
-      const midColors = [
-        [15, 15, 50],
-        [220, 160, 120],
-        [170, 210, 255],
-        [255, 160, 100],
-        [15, 15, 50],
+      const midHColors = [
+        [15, 15, 50], [200, 140, 100], [140, 195, 255], [240, 140, 80], [15, 15, 50],
+      ];
+      const midLColors = [
+        [20, 20, 60], [230, 180, 140], [180, 220, 255], [255, 170, 100], [20, 20, 60],
       ];
       const botColors = [
-        [10, 10, 30],
-        [255, 200, 150],
-        [200, 230, 255],
-        [255, 180, 120],
-        [10, 10, 30],
+        [10, 10, 35], [255, 210, 170], [200, 235, 255], [255, 190, 130], [10, 10, 35],
+      ];
+      const groundColors = [
+        [8, 10, 25], [180, 160, 130], [120, 180, 120], [180, 140, 100], [8, 10, 25],
       ];
 
       const seg = cycle * 4;
       const idx = Math.floor(seg);
       const frac = seg - idx;
+      const mi = Math.min(idx + 1, 4);
 
-      const top = lerpColor(topColors[idx], topColors[Math.min(idx + 1, 4)], frac);
-      const mid = lerpColor(midColors[idx], midColors[Math.min(idx + 1, 4)], frac);
-      const bot = lerpColor(botColors[idx], botColors[Math.min(idx + 1, 4)], frac);
+      const cTop = lerpColor(topColors[idx], topColors[mi], frac);
+      const cMidH = lerpColor(midHColors[idx], midHColors[mi], frac);
+      const cMidL = lerpColor(midLColors[idx], midLColors[mi], frac);
+      const cBot = lerpColor(botColors[idx], botColors[mi], frac);
+      const cGround = lerpColor(groundColors[idx], groundColors[mi], frac);
 
       const grad = skyCtx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, 'rgb(' + Math.round(top[0]) + ',' + Math.round(top[1]) + ',' + Math.round(top[2]) + ')');
-      grad.addColorStop(0.45, 'rgb(' + Math.round(mid[0]) + ',' + Math.round(mid[1]) + ',' + Math.round(mid[2]) + ')');
-      grad.addColorStop(1, 'rgb(' + Math.round(bot[0]) + ',' + Math.round(bot[1]) + ',' + Math.round(bot[2]) + ')');
+      grad.addColorStop(0, 'rgb(' + cTop.map(Math.round).join(',') + ')');
+      grad.addColorStop(0.25, 'rgb(' + cMidH.map(Math.round).join(',') + ')');
+      grad.addColorStop(0.55, 'rgb(' + cMidL.map(Math.round).join(',') + ')');
+      grad.addColorStop(0.8, 'rgb(' + cBot.map(Math.round).join(',') + ')');
+      grad.addColorStop(1, 'rgb(' + cGround.map(Math.round).join(',') + ')');
       skyCtx.fillStyle = grad;
       skyCtx.fillRect(0, 0, w, h);
 
-      // Sun
+      // Sun with halo and rays
       const sunX = w * 0.3 + w * 0.4 * Math.cos(cycle * Math.PI * 2 - Math.PI / 2);
       const sunY = h * 0.7 - h * 0.5 * Math.sin(cycle * Math.PI * 2 - Math.PI / 2);
 
       if (cycle > 0.15 && cycle < 0.85) {
         const sunAlpha = Math.sin((cycle - 0.15) / 0.7 * Math.PI) * 0.9;
-        const sunGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 80);
-        sunGrad.addColorStop(0, 'rgba(255,255,200,' + sunAlpha + ')');
-        sunGrad.addColorStop(0.2, 'rgba(255,230,150,' + (sunAlpha * 0.7) + ')');
-        sunGrad.addColorStop(0.5, 'rgba(255,200,100,' + (sunAlpha * 0.3) + ')');
-        sunGrad.addColorStop(1, 'rgba(255,150,50,0)');
+        // Outer glow
+        const glowGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 160);
+        glowGrad.addColorStop(0, 'rgba(255,255,200,' + (sunAlpha * 0.25) + ')');
+        glowGrad.addColorStop(0.5, 'rgba(255,220,150,' + (sunAlpha * 0.1) + ')');
+        glowGrad.addColorStop(1, 'rgba(255,200,100,0)');
+        skyCtx.fillStyle = glowGrad;
+        skyCtx.beginPath();
+        skyCtx.arc(sunX, sunY, 160, 0, Math.PI * 2);
+        skyCtx.fill();
+        // Sun body
+        const sunGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 35);
+        sunGrad.addColorStop(0, 'rgba(255,255,240,' + sunAlpha + ')');
+        sunGrad.addColorStop(0.6, 'rgba(255,240,180,' + (sunAlpha * 0.8) + ')');
+        sunGrad.addColorStop(1, 'rgba(255,200,100,' + (sunAlpha * 0.3) + ')');
         skyCtx.fillStyle = sunGrad;
         skyCtx.beginPath();
-        skyCtx.arc(sunX, sunY, 80, 0, Math.PI * 2);
+        skyCtx.arc(sunX, sunY, 35, 0, Math.PI * 2);
         skyCtx.fill();
+        // Rays
+        skyCtx.save();
+        skyCtx.globalAlpha = sunAlpha * 0.08;
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2 + t * 0.2;
+          const len = 120 + Math.sin(i * 3 + t) * 30;
+          skyCtx.beginPath();
+          skyCtx.moveTo(sunX + Math.cos(a) * 40, sunY + Math.sin(a) * 40);
+          skyCtx.lineTo(sunX + Math.cos(a) * len, sunY + Math.sin(a) * len);
+          skyCtx.strokeStyle = 'rgba(255,255,200,0.4)';
+          skyCtx.lineWidth = 2;
+          skyCtx.stroke();
+        }
+        skyCtx.restore();
       }
 
-      // Stars
-      if (cycle < 0.15 || cycle > 0.8) {
-        for (let i = 0; i < 80; i++) {
+      // Stars with twinkling
+      if (isNight || isDawn || isDusk) {
+        const starAlpha = isNight ? 1 : 0.4;
+        for (let i = 0; i < 100; i++) {
           const sx = (Math.sin(i * 127.1) * 0.5 + 0.5) * w;
-          const sy = (Math.sin(i * 311.7) * 0.5 + 0.5) * h * 0.65;
-          const sa = (Math.sin(t * 2 + i) * 0.3 + 0.5) * 0.7;
+          const sy = (Math.sin(i * 311.7) * 0.5 + 0.5) * h * 0.6;
+          const twinkle = Math.sin(t * 3 + i * 1.7) * 0.5 + 0.5;
+          const sa = twinkle * starAlpha * 0.8;
+          const size = 0.8 + twinkle * 0.8;
           skyCtx.fillStyle = 'rgba(255,255,230,' + sa + ')';
           skyCtx.beginPath();
-          skyCtx.arc(sx, sy, 1.3, 0, Math.PI * 2);
+          skyCtx.arc(sx, sy, size, 0, Math.PI * 2);
+          skyCtx.fill();
+          if (twinkle > 0.7 && starAlpha > 0.6) {
+            skyCtx.fillStyle = 'rgba(255,255,230,' + (sa * 0.3) + ')';
+            skyCtx.beginPath();
+            skyCtx.arc(sx, sy, size * 3, 0, Math.PI * 2);
+            skyCtx.fill();
+          }
+        }
+      }
+
+      // Clouds on canvas
+      const clouds = [
+        { x: 0.1, y: 0.08, s: 1.0, spd: 0.008 },
+        { x: 0.35, y: 0.15, s: 1.3, spd: 0.005 },
+        { x: 0.6, y: 0.06, s: 0.9, spd: 0.01 },
+        { x: 0.85, y: 0.18, s: 1.1, spd: 0.007 },
+        { x: 0.2, y: 0.25, s: 0.8, spd: 0.009 },
+        { x: 0.5, y: 0.22, s: 1.2, spd: 0.006 },
+        { x: 0.75, y: 0.1, s: 0.7, spd: 0.011 },
+        { x: 0.95, y: 0.28, s: 1.0, spd: 0.008 },
+      ];
+      clouds.forEach(cl => {
+        let cx = ((cl.x + t * cl.spd) % 1.3) - 0.15;
+        cx *= w;
+        const cy = cl.y * h;
+        const s = cl.s;
+        const ca = isNight ? 0.12 : 0.5;
+        const c = isNight ? 'rgba(40,50,70,' + ca + ')' : 'rgba(255,255,255,' + ca + ')';
+        skyCtx.fillStyle = c;
+        skyCtx.beginPath();
+        skyCtx.ellipse(cx, cy, 60 * s, 22 * s, 0, 0, Math.PI * 2);
+        skyCtx.fill();
+        skyCtx.beginPath();
+        skyCtx.ellipse(cx - 30 * s, cy + 5 * s, 35 * s, 18 * s, 0, 0, Math.PI * 2);
+        skyCtx.fill();
+        skyCtx.beginPath();
+        skyCtx.ellipse(cx + 35 * s, cy + 3 * s, 40 * s, 20 * s, 0, 0, Math.PI * 2);
+        skyCtx.fill();
+        skyCtx.beginPath();
+        skyCtx.ellipse(cx + 5 * s, cy - 15 * s, 45 * s, 20 * s, 0, 0, Math.PI * 2);
+        skyCtx.fill();
+      });
+
+      // Mountains - 4 layers with snow
+      const mBase = h * 0.68;
+
+      const drawMountain = (baseY, amp1, amp2, freq1, freq2, color, snowColor) => {
+        skyCtx.fillStyle = color;
+        skyCtx.beginPath();
+        skyCtx.moveTo(0, baseY + amp1);
+        for (let x = 0; x <= w; x += 2) {
+          const y = baseY + Math.sin(x * freq1) * amp1 + Math.sin(x * freq2) * amp2;
+          skyCtx.lineTo(x, y);
+        }
+        skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
+        // Snow caps
+        if (snowColor) {
+          skyCtx.save();
+          skyCtx.globalAlpha = 0.6;
+          skyCtx.fillStyle = snowColor;
+          skyCtx.beginPath();
+          for (let x = 0; x <= w; x += 2) {
+            const y = baseY + Math.sin(x * freq1) * amp1 + Math.sin(x * freq2) * amp2;
+            if (x === 0) skyCtx.moveTo(x, y);
+            else skyCtx.lineTo(x, y);
+          }
+          for (let x = w; x >= 0; x -= 2) {
+            const y = baseY + Math.sin(x * freq1) * amp1 + Math.sin(x * freq2) * amp2 + 8;
+            skyCtx.lineTo(x, y);
+          }
+          skyCtx.closePath();
+          skyCtx.fill();
+          skyCtx.restore();
+        }
+      };
+
+      drawMountain(mBase, 45, 20, 0.0015, 0.004,
+        isNight ? 'rgba(15,20,35,0.75)' : 'rgba(90,120,110,0.45)',
+        isNight ? 'rgba(200,210,230,0.15)' : 'rgba(255,255,255,0.35)');
+
+      drawMountain(mBase + 40, 38, 18, 0.0025, 0.006,
+        isNight ? 'rgba(18,28,42,0.8)' : 'rgba(65,105,75,0.5)',
+        isNight ? 'rgba(180,200,220,0.1)' : 'rgba(255,255,255,0.25)');
+
+      drawMountain(mBase + 75, 30, 15, 0.0035, 0.008,
+        isNight ? 'rgba(22,35,50,0.85)' : 'rgba(50,90,60,0.55)', null);
+
+      drawMountain(mBase + 100, 22, 12, 0.004, 0.01,
+        isNight ? 'rgba(28,40,55,0.9)' : 'rgba(40,80,50,0.6)', null);
+
+      // Fog/haze between mountains
+      const fogGrad = skyCtx.createLinearGradient(0, mBase + 60, 0, mBase + 130);
+      const fogA = isNight ? 0.08 : 0.15;
+      fogGrad.addColorStop(0, 'rgba(200,220,240,0)');
+      fogGrad.addColorStop(0.5, 'rgba(200,220,240,' + fogA + ')');
+      fogGrad.addColorStop(1, 'rgba(200,220,240,0)');
+      skyCtx.fillStyle = fogGrad;
+      skyCtx.fillRect(0, mBase + 60, w, 70);
+
+      // Trees - round tops with variety
+      const treeBase = mBase + 110;
+      for (let i = 0; i < 40; i++) {
+        const tx = (i / 40) * w + Math.sin(i * 7.3) * 25;
+        const th = 22 + Math.sin(i * 3.1) * 12;
+        const tw = 10 + Math.sin(i * 5.7) * 5;
+        const ty = treeBase + Math.sin(i * 2.3) * 8;
+
+        skyCtx.fillStyle = isNight ? 'rgba(25,20,15,0.9)' : 'rgba(80,55,35,0.85)';
+        skyCtx.fillRect(tx - 1.5, ty, 3, th * 0.45);
+
+        const colors = isNight
+          ? [[18,35,20],[22,42,25],[15,30,18]]
+          : [[40+Math.sin(i)*20, 110+Math.sin(i*2)*30, 55], [55+Math.sin(i)*15, 130+Math.sin(i*3)*20, 65], [35+Math.sin(i)*10, 95+Math.sin(i)*25, 50]];
+
+        for (let j = 0; j < 3; j++) {
+          const cy2 = ty - j * th * 0.22;
+          const cr = tw * (1 - j * 0.15);
+          skyCtx.fillStyle = 'rgba(' + colors[j].map(Math.round).join(',') + ',0.88)';
+          skyCtx.beginPath();
+          skyCtx.ellipse(tx, cy2, cr, cr * 0.8, 0, 0, Math.PI * 2);
           skyCtx.fill();
         }
       }
 
-      // Mountains - 3 layers
-      const mBase = h * 0.72;
-      const isNight = cycle > 0.8 || cycle < 0.15;
-
-      skyCtx.fillStyle = isNight ? 'rgba(15,20,35,0.8)' : 'rgba(80,110,100,0.5)';
-      skyCtx.beginPath();
-      skyCtx.moveTo(0, mBase + 20);
-      for (let x = 0; x <= w; x += 2) {
-        skyCtx.lineTo(x, mBase + Math.sin(x * 0.002) * 40 + Math.sin(x * 0.005) * 20 + Math.sin(x * 0.001) * 15);
+      // Grass field
+      const grassY = mBase + 125;
+      const grassGrad = skyCtx.createLinearGradient(0, grassY, 0, grassY + 30);
+      if (isNight) {
+        grassGrad.addColorStop(0, 'rgba(15,30,18,0.7)');
+        grassGrad.addColorStop(1, 'rgba(10,20,12,0.8)');
+      } else {
+        grassGrad.addColorStop(0, 'rgba(60,130,60,0.5)');
+        grassGrad.addColorStop(1, 'rgba(45,100,45,0.6)');
       }
-      skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
+      skyCtx.fillStyle = grassGrad;
+      skyCtx.fillRect(0, grassY, w, 30);
 
-      skyCtx.fillStyle = isNight ? 'rgba(20,30,45,0.85)' : 'rgba(60,100,70,0.55)';
-      skyCtx.beginPath();
-      skyCtx.moveTo(0, mBase + 50);
-      for (let x = 0; x <= w; x += 2) {
-        skyCtx.lineTo(x, mBase + 30 + Math.sin(x * 0.003 + 2) * 35 + Math.sin(x * 0.007 + 1) * 18);
+      // Grass blades
+      skyCtx.strokeStyle = isNight ? 'rgba(30,60,35,0.5)' : 'rgba(70,150,70,0.4)';
+      skyCtx.lineWidth = 1;
+      for (let i = 0; i < 80; i++) {
+        const gx = (i / 80) * w + Math.sin(i * 5) * 8;
+        const gy = grassY + Math.sin(i * 3) * 3;
+        const gh = 6 + Math.sin(i * 2) * 4;
+        const sway = Math.sin(t * 2 + i * 0.5) * 3;
+        skyCtx.beginPath();
+        skyCtx.moveTo(gx, gy);
+        skyCtx.quadraticCurveTo(gx + sway, gy - gh * 0.6, gx + sway * 1.5, gy - gh);
+        skyCtx.stroke();
       }
-      skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
 
-      skyCtx.fillStyle = isNight ? 'rgba(25,35,50,0.9)' : 'rgba(45,85,55,0.6)';
-      skyCtx.beginPath();
-      skyCtx.moveTo(0, mBase + 80);
-      for (let x = 0; x <= w; x += 2) {
-        skyCtx.lineTo(x, mBase + 65 + Math.sin(x * 0.004 + 4) * 28 + Math.sin(x * 0.009 + 3) * 14);
-      }
-      skyCtx.lineTo(w, h); skyCtx.lineTo(0, h); skyCtx.fill();
-
-      // Trees
-      const treeBase = mBase + 90;
-      for (let i = 0; i < 30; i++) {
-        const tx = (i / 30) * w + Math.sin(i * 7.3) * 30;
-        const th = 20 + Math.sin(i * 3.1) * 15;
-        const tw = 12 + Math.sin(i * 5.7) * 6;
-        const ty = treeBase + Math.sin(i * 2.3) * 10;
-
-        skyCtx.fillStyle = isNight ? 'rgba(30,25,20,0.9)' : 'rgba(90,60,40,0.8)';
-        skyCtx.fillRect(tx - 2, ty, 4, th * 0.4);
-
-        for (let j = 0; j < 3; j++) {
-          const cy2 = ty - j * th * 0.25;
-          const cw = tw * (1 - j * 0.2);
-          const g = isNight ? [20, 40 + j * 5, 25] : [50 + j * 15, 120 + j * 20, 60 + j * 10];
-          skyCtx.fillStyle = 'rgba(' + g[0] + ',' + g[1] + ',' + g[2] + ',0.85)';
+      // Flowers
+      if (!isNight) {
+        for (let i = 0; i < 15; i++) {
+          const fx = (i / 15) * w + Math.sin(i * 11) * 40;
+          const fy = grassY + 5 + Math.sin(i * 4) * 5;
+          const fc = ['rgba(255,180,180,0.7)', 'rgba(255,255,180,0.7)', 'rgba(200,180,255,0.7)', 'rgba(255,200,220,0.7)'][i % 4];
+          skyCtx.fillStyle = fc;
+          for (let p = 0; p < 5; p++) {
+            const pa = (p / 5) * Math.PI * 2;
+            skyCtx.beginPath();
+            skyCtx.ellipse(fx + Math.cos(pa) * 3, fy + Math.sin(pa) * 3, 2.5, 1.5, pa, 0, Math.PI * 2);
+            skyCtx.fill();
+          }
+          skyCtx.fillStyle = 'rgba(255,255,100,0.8)';
           skyCtx.beginPath();
-          skyCtx.moveTo(tx, cy2 - th * 0.35);
-          skyCtx.lineTo(tx - cw, cy2);
-          skyCtx.lineTo(tx + cw, cy2);
-          skyCtx.closePath();
+          skyCtx.arc(fx, fy, 1.5, 0, Math.PI * 2);
           skyCtx.fill();
         }
       }
 
       // Water at bottom
-      const waterY = h - 40;
+      const waterY = h - 35;
       const waterGrad = skyCtx.createLinearGradient(0, waterY, 0, h);
       if (isNight) {
-        waterGrad.addColorStop(0, 'rgba(10,15,30,0.6)');
-        waterGrad.addColorStop(1, 'rgba(5,10,20,0.8)');
+        waterGrad.addColorStop(0, 'rgba(8,12,25,0.7)');
+        waterGrad.addColorStop(1, 'rgba(5,8,18,0.85)');
       } else {
-        waterGrad.addColorStop(0, 'rgba(100,160,200,0.3)');
-        waterGrad.addColorStop(1, 'rgba(60,120,160,0.5)');
+        const wr = Math.round(cBot[0] * 0.4 + 60);
+        const wg = Math.round(cBot[1] * 0.4 + 100);
+        const wb = Math.round(cBot[2] * 0.4 + 120);
+        waterGrad.addColorStop(0, 'rgba(' + wr + ',' + wg + ',' + wb + ',0.4)');
+        waterGrad.addColorStop(1, 'rgba(' + Math.round(wr * 0.7) + ',' + Math.round(wg * 0.7) + ',' + Math.round(wb * 0.7) + ',0.6)');
       }
       skyCtx.fillStyle = waterGrad;
-      skyCtx.fillRect(0, waterY, w, 40);
+      skyCtx.fillRect(0, waterY, w, 35);
 
-      skyCtx.strokeStyle = isNight ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.15)';
-      skyCtx.lineWidth = 1;
-      for (let i = 0; i < 5; i++) {
-        const ry2 = waterY + 5 + i * 7;
+      // Water ripples with sky reflection
+      for (let i = 0; i < 6; i++) {
+        const ry2 = waterY + 3 + i * 5;
+        const alpha = isNight ? 0.06 : 0.12 - i * 0.015;
+        skyCtx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+        skyCtx.lineWidth = 0.8;
         skyCtx.beginPath();
         for (let x = 0; x <= w; x += 3) {
-          const y2 = ry2 + Math.sin(x * 0.02 + t * 2 + i) * 2;
+          const y2 = ry2 + Math.sin(x * 0.018 + t * 1.5 + i * 1.2) * 1.8;
           x === 0 ? skyCtx.moveTo(x, y2) : skyCtx.lineTo(x, y2);
         }
         skyCtx.stroke();
+      }
+
+      // Moon at night
+      if (isNight) {
+        const moonX = w * 0.75;
+        const moonY = h * 0.15;
+        const moonGlow = skyCtx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 60);
+        moonGlow.addColorStop(0, 'rgba(220,230,255,0.15)');
+        moonGlow.addColorStop(1, 'rgba(200,210,240,0)');
+        skyCtx.fillStyle = moonGlow;
+        skyCtx.beginPath();
+        skyCtx.arc(moonX, moonY, 60, 0, Math.PI * 2);
+        skyCtx.fill();
+        skyCtx.fillStyle = 'rgba(230,235,250,0.85)';
+        skyCtx.beginPath();
+        skyCtx.arc(moonX, moonY, 18, 0, Math.PI * 2);
+        skyCtx.fill();
+        skyCtx.fillStyle = isNight ? 'rgba(15,20,35,1)' : 'rgba(0,0,0,0)';
+        skyCtx.beginPath();
+        skyCtx.arc(moonX + 5, moonY - 3, 16, 0, Math.PI * 2);
+        skyCtx.fill();
+      }
+
+      // Fireflies at night
+      if (isNight) {
+        for (let i = 0; i < 20; i++) {
+          const fx = (Math.sin(i * 83.7 + t * 0.3) * 0.5 + 0.5) * w;
+          const fy = (Math.sin(i * 191.3 + t * 0.2) * 0.5 + 0.5) * h * 0.5 + h * 0.3;
+          const fa = (Math.sin(t * 4 + i * 2.1) * 0.5 + 0.5) * 0.7;
+          skyCtx.fillStyle = 'rgba(255,255,150,' + fa + ')';
+          skyCtx.beginPath();
+          skyCtx.arc(fx, fy, 2, 0, Math.PI * 2);
+          skyCtx.fill();
+          skyCtx.fillStyle = 'rgba(255,255,150,' + (fa * 0.2) + ')';
+          skyCtx.beginPath();
+          skyCtx.arc(fx, fy, 6, 0, Math.PI * 2);
+          skyCtx.fill();
+        }
       }
     }
 

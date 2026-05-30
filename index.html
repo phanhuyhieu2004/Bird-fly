@@ -238,6 +238,12 @@
     const clickCanvas = document.getElementById('click-canvas');
     const clickCtx = clickCanvas.getContext('2d');
 
+    let vw = window.innerWidth;
+    let vh = window.innerHeight;
+    let time = 0;
+    let bgColor = null;
+    let speedMultiplier = 1;
+
     function resize() {
       skyCanvas.width = particleCanvas.width = trailCanvas.width = clickCanvas.width = window.innerWidth;
       skyCanvas.height = particleCanvas.height = trailCanvas.height = clickCanvas.height = window.innerHeight;
@@ -254,12 +260,6 @@
     riveCanvas.height = SIZE;
     birdCanvas.style.width = SIZE * 0.45 + 'px';
     birdCanvas.style.height = SIZE * 0.45 + 'px';
-
-    let vw = window.innerWidth;
-    let vh = window.innerHeight;
-    let time = 0;
-    let bgColor = null;
-    let speedMultiplier = 1;
 
     new rive.Rive({
       src: 'birdfly.riv',

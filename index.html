@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bird Fly</title>
+  <title>Bird Fly - Relax</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -11,8 +11,14 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background: linear-gradient(180deg, #87CEEB 0%, #E0F0FF 40%, #FFF8E7 70%, #FFE4B5 100%);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Georgia', serif;
+    }
+
+    #sky-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
     }
 
     .clouds {
@@ -20,102 +26,152 @@
       top: 0; left: 0;
       width: 100%; height: 100%;
       pointer-events: none;
+      z-index: 2;
     }
 
     .cloud {
       position: absolute;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.6);
       border-radius: 50%;
-      filter: blur(1px);
     }
     .cloud::before, .cloud::after {
       content: '';
       position: absolute;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.6);
       border-radius: 50%;
     }
 
-    .cloud-1 { width: 120px; height: 50px; top: 8%; left: -150px; animation: drift 25s linear infinite; }
-    .cloud-1::before { width: 60px; height: 60px; top: -30px; left: 20px; }
-    .cloud-1::after { width: 80px; height: 50px; top: -20px; left: 50px; }
+    .cloud-1 { width: 140px; height: 50px; top: 12%; animation: drift1 60s linear infinite; }
+    .cloud-1::before { width: 70px; height: 65px; top: -32px; left: 25px; }
+    .cloud-1::after { width: 90px; height: 50px; top: -20px; left: 60px; }
 
-    .cloud-2 { width: 160px; height: 60px; top: 20%; left: -200px; animation: drift 35s linear infinite 5s; }
-    .cloud-2::before { width: 80px; height: 70px; top: -35px; left: 30px; }
-    .cloud-2::after { width: 100px; height: 60px; top: -25px; left: 70px; }
+    .cloud-2 { width: 180px; height: 65px; top: 22%; animation: drift2 80s linear infinite 10s; }
+    .cloud-2::before { width: 90px; height: 75px; top: -38px; left: 35px; }
+    .cloud-2::after { width: 110px; height: 65px; top: -28px; left: 80px; }
 
-    .cloud-3 { width: 100px; height: 40px; top: 35%; left: -130px; animation: drift 30s linear infinite 12s; }
-    .cloud-3::before { width: 50px; height: 50px; top: -25px; left: 15px; }
-    .cloud-3::after { width: 70px; height: 40px; top: -15px; left: 40px; }
+    .cloud-3 { width: 110px; height: 42px; top: 32%; animation: drift3 70s linear infinite 20s; }
+    .cloud-3::before { width: 55px; height: 55px; top: -27px; left: 18px; }
+    .cloud-3::after { width: 75px; height: 42px; top: -16px; left: 45px; }
 
-    @keyframes drift {
-      from { transform: translateX(0); }
-      to { transform: translateX(calc(100vw + 300px)); }
-    }
+    .cloud-4 { width: 130px; height: 48px; top: 18%; animation: drift1 90s linear infinite 30s; }
+    .cloud-4::before { width: 65px; height: 60px; top: -30px; left: 22px; }
+    .cloud-4::after { width: 85px; height: 48px; top: -18px; left: 55px; }
+
+    @keyframes drift1 { from { left: -200px; } to { left: 110vw; } }
+    @keyframes drift2 { from { left: -250px; } to { left: 110vw; } }
+    @keyframes drift3 { from { left: -180px; } to { left: 110vw; } }
 
     #trail-canvas {
       position: fixed;
       top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%; height: 100%;
       pointer-events: none;
-      z-index: 0;
+      z-index: 3;
     }
 
     #bird-canvas {
       position: fixed;
-      width: 220px;
-      height: 220px;
-      z-index: 1;
-      filter: drop-shadow(0 8px 20px rgba(0,0,0,0.15));
+      width: 180px;
+      height: 180px;
+      z-index: 4;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.12));
     }
 
     #rive-canvas {
       position: fixed;
-      width: 220px;
-      height: 220px;
+      width: 180px;
+      height: 180px;
       opacity: 0;
       pointer-events: none;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .sound-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    .sound-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .time-text {
+      position: fixed;
+      bottom: 35px;
+      left: 30px;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
+  <canvas id="sky-canvas"></canvas>
+  <canvas id="particle-canvas"></canvas>
+
   <div class="clouds">
     <div class="cloud cloud-1"></div>
     <div class="cloud cloud-2"></div>
     <div class="cloud cloud-3"></div>
+    <div class="cloud cloud-4"></div>
   </div>
 
   <canvas id="trail-canvas"></canvas>
   <canvas id="bird-canvas"></canvas>
   <canvas id="rive-canvas"></canvas>
 
+  <div class="time-text" id="time-text"></div>
+  <button class="sound-btn" id="sound-btn" title="Toggle ambient sound">&#9835;</button>
+
   <script src="https://unpkg.com/@rive-app/canvas/rive.js"></script>
   <script>
-    const canvas = document.getElementById('bird-canvas');
-    const ctx = canvas.getContext('2d');
-    const SIZE = 400;
-    canvas.width = SIZE;
-    canvas.height = SIZE;
-
+    const skyCanvas = document.getElementById('sky-canvas');
+    const skyCtx = skyCanvas.getContext('2d');
+    const particleCanvas = document.getElementById('particle-canvas');
+    const particleCtx = particleCanvas.getContext('2d');
     const trailCanvas = document.getElementById('trail-canvas');
-    trailCanvas.width = window.innerWidth;
-    trailCanvas.height = window.innerHeight;
     const trailCtx = trailCanvas.getContext('2d');
-
+    const birdCanvas = document.getElementById('bird-canvas');
+    const birdCtx = birdCanvas.getContext('2d');
     const riveCanvas = document.getElementById('rive-canvas');
+
+    function resize() {
+      skyCanvas.width = particleCanvas.width = trailCanvas.width = window.innerWidth;
+      skyCanvas.height = particleCanvas.height = trailCanvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const SIZE = 400;
+    birdCanvas.width = SIZE;
+    birdCanvas.height = SIZE;
     riveCanvas.width = SIZE;
     riveCanvas.height = SIZE;
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-
-    let birdX = -200;
-    let birdY = vh / 2;
     let time = 0;
     let bgColor = null;
-
-    const particles = [];
-    const MAX_PARTICLES = 30;
 
     new rive.Rive({
       src: 'birdfly.riv',
@@ -131,42 +187,110 @@
     stripCanvas.height = SIZE;
     const stripCtx = stripCanvas.getContext('2d');
 
-    function spawnParticle(x, y) {
-      particles.push({
-        x: x + (Math.random() - 0.5) * 20,
-        y: y + (Math.random() - 0.5) * 20,
-        size: Math.random() * 8 + 4,
-        alpha: 0.6,
-        life: 1,
-      });
-      if (particles.length > MAX_PARTICLES) particles.shift();
+    function lerpColor(a, b, t) {
+      return [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+        a[2] + (b[2] - a[2]) * t,
+      ];
     }
 
+    function drawSky(t) {
+      const w = skyCanvas.width, h = skyCanvas.height;
+
+      const cycle = t % 1;
+
+      const topColors = [
+        [25, 25, 80],    // night
+        [135, 206, 235], // morning
+        [100, 180, 255], // noon
+        [255, 150, 80],  // sunset
+        [25, 25, 80],    // night
+      ];
+      const botColors = [
+        [15, 15, 40],
+        [255, 220, 180],
+        [200, 230, 255],
+        [255, 200, 150],
+        [15, 15, 40],
+      ];
+
+      const seg = cycle * 4;
+      const idx = Math.floor(seg);
+      const frac = seg - idx;
+
+      const top = lerpColor(topColors[idx], topColors[Math.min(idx + 1, 4)], frac);
+      const bot = lerpColor(botColors[idx], botColors[Math.min(idx + 1, 4)], frac);
+
+      const grad = skyCtx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgb(' + Math.round(top[0]) + ',' + Math.round(top[1]) + ',' + Math.round(top[2]) + ')');
+      grad.addColorStop(1, 'rgb(' + Math.round(bot[0]) + ',' + Math.round(bot[1]) + ',' + Math.round(bot[2]) + ')');
+      skyCtx.fillStyle = grad;
+      skyCtx.fillRect(0, 0, w, h);
+
+      const sunX = w * 0.3 + w * 0.4 * Math.cos(cycle * Math.PI * 2 - Math.PI / 2);
+      const sunY = h * 0.7 - h * 0.5 * Math.sin(cycle * Math.PI * 2 - Math.PI / 2);
+
+      if (cycle > 0.15 && cycle < 0.85) {
+        const sunAlpha = Math.sin((cycle - 0.15) / 0.7 * Math.PI) * 0.8;
+        const sunGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+        sunGrad.addColorStop(0, 'rgba(255,255,200,' + sunAlpha + ')');
+        sunGrad.addColorStop(0.3, 'rgba(255,200,100,' + (sunAlpha * 0.5) + ')');
+        sunGrad.addColorStop(1, 'rgba(255,150,50,0)');
+        skyCtx.fillStyle = sunGrad;
+        skyCtx.beginPath();
+        skyCtx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+        skyCtx.fill();
+      }
+
+      const mY = h * 0.75;
+      skyCtx.fillStyle = cycle > 0.8 || cycle < 0.15 ? 'rgba(20,25,40,0.6)' : 'rgba(60,90,60,0.3)';
+      skyCtx.beginPath();
+      skyCtx.moveTo(0, mY + 40);
+      for (let x = 0; x <= w; x += 2) {
+        skyCtx.lineTo(x, mY + Math.sin(x * 0.003) * 30 + Math.sin(x * 0.007) * 15);
+      }
+      skyCtx.lineTo(w, h);
+      skyCtx.lineTo(0, h);
+      skyCtx.fill();
+
+      skyCtx.fillStyle = cycle > 0.8 || cycle < 0.15 ? 'rgba(15,20,30,0.7)' : 'rgba(40,70,40,0.4)';
+      skyCtx.beginPath();
+      skyCtx.moveTo(0, mY + 70);
+      for (let x = 0; x <= w; x += 2) {
+        skyCtx.lineTo(x, mY + 50 + Math.sin(x * 0.004 + 1) * 25 + Math.sin(x * 0.009 + 2) * 12);
+      }
+      skyCtx.lineTo(w, h);
+      skyCtx.lineTo(0, h);
+      skyCtx.fill();
+    }
+
+    const birdParticles = [];
+    const floatingParticles = [];
+
     function loop() {
-      time += 0.006;
+      time += 0.003;
+      drawSky(time);
 
       const cx = vw / 2;
       const cy = vh / 2;
-      const rx = vw * 0.4;
-      const ry = vh * 0.3;
+      const rx = vw * 0.35;
+      const ry = vh * 0.25;
 
-      birdX = cx + Math.cos(time) * rx;
-      birdY = cy + Math.sin(time * 2) * ry;
-
+      const birdX = cx + Math.cos(time) * rx;
+      const birdY = cy + Math.sin(time * 2) * ry;
       const goingRight = Math.sin(time) < 0;
       const goingUp = Math.cos(time * 2) < 0;
-
-      let tilt = goingUp ? -12 : 12;
+      const tilt = goingUp ? -10 : 10;
       const scaleX = goingRight ? 1 : -1;
       const displayAngle = goingRight ? tilt : -tilt;
 
-      canvas.style.left = (birdX - SIZE / 2) + 'px';
-      canvas.style.top = (birdY - SIZE / 2) + 'px';
-      canvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + displayAngle + 'deg)';
+      birdCanvas.style.left = (birdX - SIZE / 2) + 'px';
+      birdCanvas.style.top = (birdY - SIZE / 2) + 'px';
+      birdCanvas.style.transform = 'scaleX(' + scaleX + ') rotate(' + displayAngle + 'deg)';
 
       stripCtx.clearRect(0, 0, SIZE, SIZE);
       stripCtx.drawImage(riveCanvas, 0, 0, SIZE, SIZE);
-
       const img = stripCtx.getImageData(0, 0, SIZE, SIZE);
       const d = img.data;
 
@@ -185,31 +309,118 @@
         }
       }
 
-      ctx.clearRect(0, 0, SIZE, SIZE);
-      ctx.putImageData(img, 0, 0);
+      birdCtx.clearRect(0, 0, SIZE, SIZE);
+      birdCtx.putImageData(img, 0, 0);
 
-      if (Math.random() < 0.5) spawnParticle(birdX, birdY);
+      if (Math.random() < 0.3) {
+        birdParticles.push({
+          x: birdX + (Math.random() - 0.5) * 30,
+          y: birdY + (Math.random() - 0.5) * 30,
+          size: Math.random() * 4 + 2,
+          alpha: 0.5,
+          life: 1,
+        });
+        if (birdParticles.length > 20) birdParticles.shift();
+      }
 
       trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= 0.02;
-        p.alpha = p.life * 0.4;
-        p.size *= 0.98;
-        p.y -= 0.3;
-
-        if (p.life <= 0) { particles.splice(i, 1); continue; }
-
+      for (let i = birdParticles.length - 1; i >= 0; i--) {
+        const p = birdParticles[i];
+        p.life -= 0.015;
+        p.alpha = p.life * 0.35;
+        p.size *= 0.99;
+        p.y -= 0.2;
+        if (p.life <= 0) { birdParticles.splice(i, 1); continue; }
         trailCtx.beginPath();
         trailCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        trailCtx.fillStyle = 'rgba(255, 220, 100, ' + p.alpha + ')';
+        trailCtx.fillStyle = 'rgba(255,220,120,' + p.alpha + ')';
         trailCtx.fill();
+      }
+
+      if (Math.random() < 0.08) {
+        floatingParticles.push({
+          x: Math.random() * vw,
+          y: vh + 10,
+          size: Math.random() * 3 + 1,
+          alpha: Math.random() * 0.3 + 0.1,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -(Math.random() * 0.4 + 0.2),
+          life: 1,
+        });
+        if (floatingParticles.length > 50) floatingParticles.shift();
+      }
+
+      particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+      for (let i = floatingParticles.length - 1; i >= 0; i--) {
+        const p = floatingParticles[i];
+        p.x += p.vx + Math.sin(time * 3 + i) * 0.15;
+        p.y += p.vy;
+        p.life -= 0.003;
+        p.alpha = p.life * 0.3;
+        if (p.life <= 0 || p.y < -10) { floatingParticles.splice(i, 1); continue; }
+        particleCtx.beginPath();
+        particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        particleCtx.fillStyle = 'rgba(255,255,255,' + p.alpha + ')';
+        particleCtx.fill();
       }
 
       requestAnimationFrame(loop);
     }
-
     requestAnimationFrame(loop);
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx, soundOn = false;
+    let windNode, chirpInterval;
+
+    function createWind() {
+      audioCtx = new AudioCtx();
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.03;
+
+      windNode = audioCtx.createBufferSource();
+      windNode.buffer = buffer;
+      windNode.loop = true;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 400;
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.15;
+
+      windNode.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+      windNode.start();
+
+      chirpInterval = setInterval(() => {
+        if (!soundOn) return;
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 1800 + Math.random() * 1200;
+        g.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      }, 2000 + Math.random() * 3000);
+    }
+
+    document.getElementById('sound-btn').addEventListener('click', () => {
+      if (!audioCtx) createWind();
+      soundOn = !soundOn;
+      if (soundOn) {
+        audioCtx.resume();
+        document.getElementById('sound-btn').innerHTML = '&#9834;';
+      } else {
+        audioCtx.suspend();
+        document.getElementById('sound-btn').innerHTML = '&#9835;';
+      }
+    });
   </script>
 </body>
 </html>

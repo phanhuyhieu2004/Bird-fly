@@ -6,6 +6,7 @@
   <title>Bird Fly - Relax</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -131,7 +132,7 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: white;
-      font-size: 18px;
+      font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -146,6 +147,11 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     .action-btn:active { transform: scale(0.92); }
+    .action-btn.active {
+      background: rgba(255,220,100,0.35);
+      border-color: rgba(255,220,100,0.6);
+      box-shadow: 0 0 15px rgba(255,220,100,0.3);
+    }
     .action-btn .tip {
       position: absolute;
       right: 58px;
@@ -158,6 +164,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s;
+      font-family: 'Quicksand', sans-serif;
     }
     .action-btn:hover .tip { opacity: 1; }
   </style>
@@ -183,12 +190,12 @@
   <canvas id="rive-canvas"></canvas>
 
   <div class="btn-panel">
-    <button class="action-btn" id="spin-btn" title="Bird spin">&#x1F3B2;<span class="tip">Xoay chim</span></button>
-    <button class="action-btn" id="burst-btn" title="Fireworks">&#x1F386;<span class="tip">Pháo hoa</span></button>
-    <button class="action-btn" id="flock-btn" title="Flock">&#x1F426;<span class="tip">Bầy chim</span></button>
-    <button class="action-btn" id="rain-btn" title="Rain">&#x1F327;<span class="tip">Mưa</span></button>
-    <button class="action-btn" id="time-btn" title="Jump time">&#x23ED;<span class="tip">Chuyển thời gian</span></button>
-    <button class="action-btn" id="speed-btn" title="Speed">&#x26A1;<span class="tip">Tốc độ</span></button>
+    <button class="action-btn" id="spin-btn"><i class="fas fa-sync-alt"></i><span class="tip">Xoay chim</span></button>
+    <button class="action-btn" id="burst-btn"><i class="fas fa-fire"></i><span class="tip">Pháo hoa</span></button>
+    <button class="action-btn" id="flock-btn"><i class="fas fa-dove"></i><span class="tip">Bầy chim</span></button>
+    <button class="action-btn" id="rain-btn"><i class="fas fa-cloud-rain"></i><span class="tip">Mưa</span></button>
+    <button class="action-btn" id="time-btn"><i class="fas fa-forward"></i><span class="tip">Chuyển thời gian</span></button>
+    <button class="action-btn" id="speed-btn"><i class="fas fa-bolt"></i><span class="tip">Tốc độ</span></button>
   </div>
 
   <audio id="bgm" loop autoplay preload="auto">
@@ -993,15 +1000,6 @@
     }
     requestAnimationFrame(loop);
 
-    const speeds = [0.5, 1, 1.5, 2];
-    let speedIdx = 1;
-    const speedIcon = document.getElementById('speed-btn');
-    speedIcon.addEventListener('click', () => {
-      speedIdx = (speedIdx + 1) % speeds.length;
-      speedMultiplier = speeds[speedIdx];
-      speedIcon.querySelector('.tip').textContent = 'Toc do ' + speeds[speedIdx] + 'x';
-    });
-
     // Spin button
     document.getElementById('spin-btn').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1045,26 +1043,32 @@
       }
     });
 
-    // Flock button
+    // Flock button - clones of main bird
     let flockActive = false;
     let flockBirds = [];
+    const flockCanvas = document.createElement('canvas');
+    const flockCtx = flockCanvas.getContext('2d');
     document.getElementById('flock-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      if (flockActive) {
-        flockActive = false;
+      const btn = document.getElementById('flock-btn');
+      flockActive = !flockActive;
+      btn.classList.toggle('active', flockActive);
+      if (!flockActive) {
         flockBirds = [];
-        return;
-      }
-      flockActive = true;
-      for (let i = 0; i < 8; i++) {
-        flockBirds.push({
-          x: vw * 0.3 + Math.random() * vw * 0.4,
-          y: vh * 0.15 + Math.random() * vh * 0.35,
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 1,
-          wingPhase: Math.random() * Math.PI * 2,
-          size: 6 + Math.random() * 4,
-        });
+      } else {
+        const cx2 = vw / 2, cy2 = vh / 2;
+        const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
+        const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
+        for (let i = 0; i < 10; i++) {
+          flockBirds.push({
+            x: bx + (Math.random() - 0.5) * 100,
+            y: by + (Math.random() - 0.5) * 80,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 3,
+            scale: 0.3 + Math.random() * 0.5,
+            tilt: 0,
+          });
+        }
       }
     });
 
@@ -1073,8 +1077,10 @@
     let rainDrops = [];
     document.getElementById('rain-btn').addEventListener('click', (e) => {
       e.stopPropagation();
+      const btn = document.getElementById('rain-btn');
       rainActive = !rainActive;
-      rainDrops = [];
+      btn.classList.toggle('active', rainActive);
+      if (!rainActive) rainDrops = [];
     });
 
     // Time jump button
@@ -1083,108 +1089,43 @@
       skyTime += 0.25;
     });
 
-    // Rain + flock rendering in loop
+    // Speed button
+    const speeds = [0.5, 1, 1.5, 2];
+    let speedIdx = 1;
+    document.getElementById('speed-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      speedIdx = (speedIdx + 1) % speeds.length;
+      speedMultiplier = speeds[speedIdx];
+    });
+
     function drawFlock() {
-      if (!flockActive) return;
+      if (!flockActive || flockBirds.length === 0) return;
       const cx2 = vw / 2, cy2 = vh / 2;
       const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
       const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
+
       flockBirds.forEach(b => {
         const dx = bx - b.x, dy = by - b.y;
-        const dist = Math.hypot(dx, dy);
-        b.vx += dx / dist * 0.03;
-        b.vy += dy / dist * 0.03;
-        b.vx += (Math.random() - 0.5) * 0.15;
-        b.vy += (Math.random() - 0.5) * 0.12;
-        b.vx *= 0.97; b.vy *= 0.97;
+        const dist = Math.hypot(dx, dy) || 1;
+        b.vx += dx / dist * 0.08;
+        b.vy += dy / dist * 0.08;
+        b.vx += (Math.random() - 0.5) * 0.6;
+        b.vy += (Math.random() - 0.5) * 0.5;
+        b.vx *= 0.96; b.vy *= 0.96;
         b.x += b.vx; b.y += b.vy;
-        b.wingPhase += 0.18;
+        if (b.x < -50) b.x = vw + 50;
+        if (b.x > vw + 50) b.x = -50;
+        if (b.y < -50) b.y = vh + 50;
+        if (b.y > vh + 50) b.y = -50;
 
-        const wingUp = Math.sin(b.wingPhase);
-        const wingY = wingUp * 10;
-        const s = b.size;
-        const tilt = wingUp * 8;
-        const facingRight = b.vx > 0;
+        b.tilt += ((b.vy * 3) - b.tilt) * 0.1;
+        const scaleX = b.vx > 0 ? 1 : -1;
 
         skyCtx.save();
         skyCtx.translate(b.x, b.y);
-        skyCtx.rotate(tilt * Math.PI / 180);
-        if (!facingRight) skyCtx.scale(-1, 1);
-
-        // Body
-        skyCtx.fillStyle = 'rgba(220,180,60,0.9)';
-        skyCtx.beginPath();
-        skyCtx.ellipse(0, 0, s * 1.2, s * 0.6, 0, 0, Math.PI * 2);
-        skyCtx.fill();
-
-        // Body highlight
-        skyCtx.fillStyle = 'rgba(255,220,100,0.6)';
-        skyCtx.beginPath();
-        skyCtx.ellipse(-s * 0.1, -s * 0.15, s * 0.8, s * 0.35, -0.2, 0, Math.PI * 2);
-        skyCtx.fill();
-
-        // Head
-        skyCtx.fillStyle = 'rgba(230,190,65,0.9)';
-        skyCtx.beginPath();
-        skyCtx.arc(s * 1.0, -s * 0.2, s * 0.5, 0, Math.PI * 2);
-        skyCtx.fill();
-
-        // Beak
-        skyCtx.fillStyle = 'rgba(255,140,50,0.9)';
-        skyCtx.beginPath();
-        skyCtx.moveTo(s * 1.5, -s * 0.2);
-        skyCtx.lineTo(s * 2.0, -s * 0.1);
-        skyCtx.lineTo(s * 1.5, s * 0.05);
-        skyCtx.closePath();
-        skyCtx.fill();
-
-        // Eye
-        skyCtx.fillStyle = 'rgba(30,30,30,0.9)';
-        skyCtx.beginPath();
-        skyCtx.arc(s * 1.15, -s * 0.3, s * 0.12, 0, Math.PI * 2);
-        skyCtx.fill();
-        skyCtx.fillStyle = 'rgba(255,255,255,0.8)';
-        skyCtx.beginPath();
-        skyCtx.arc(s * 1.18, -s * 0.33, s * 0.05, 0, Math.PI * 2);
-        skyCtx.fill();
-
-        // Wings
-        skyCtx.fillStyle = 'rgba(200,160,40,0.85)';
-        // Top wing
-        skyCtx.beginPath();
-        skyCtx.moveTo(-s * 0.3, 0);
-        skyCtx.quadraticCurveTo(-s * 0.1, -wingY * 1.5, s * 0.4, -wingY * 1.2);
-        skyCtx.quadraticCurveTo(s * 0.2, -wingY * 0.3, 0, 0);
-        skyCtx.closePath();
-        skyCtx.fill();
-        // Bottom wing
-        skyCtx.beginPath();
-        skyCtx.moveTo(-s * 0.3, 0);
-        skyCtx.quadraticCurveTo(-s * 0.1, wingY * 0.8, s * 0.3, wingY * 0.6);
-        skyCtx.quadraticCurveTo(s * 0.2, wingY * 0.15, 0, 0);
-        skyCtx.closePath();
-        skyCtx.fill();
-
-        // Wing highlight
-        skyCtx.fillStyle = 'rgba(255,220,100,0.4)';
-        skyCtx.beginPath();
-        skyCtx.moveTo(-s * 0.1, -s * 0.05);
-        skyCtx.quadraticCurveTo(s * 0.1, -wingY * 1.0, s * 0.3, -wingY * 0.8);
-        skyCtx.quadraticCurveTo(s * 0.15, -wingY * 0.2, 0, -s * 0.05);
-        skyCtx.closePath();
-        skyCtx.fill();
-
-        // Tail
-        skyCtx.fillStyle = 'rgba(180,140,30,0.8)';
-        skyCtx.beginPath();
-        skyCtx.moveTo(-s * 1.0, 0);
-        skyCtx.lineTo(-s * 1.8, -s * 0.4);
-        skyCtx.lineTo(-s * 1.6, s * 0.1);
-        skyCtx.lineTo(-s * 1.8, s * 0.5);
-        skyCtx.lineTo(-s * 1.0, s * 0.1);
-        skyCtx.closePath();
-        skyCtx.fill();
-
+        skyCtx.scale(scaleX * b.scale, b.scale);
+        skyCtx.rotate(b.tilt * Math.PI / 180);
+        skyCtx.drawImage(birdCanvas, -SIZE / 2, -SIZE / 2, SIZE, SIZE);
         skyCtx.restore();
       });
     }

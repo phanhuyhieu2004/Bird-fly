@@ -311,16 +311,20 @@
     const birdParticles = [];
     const floatingParticles = [];
 
+    let skyTime = 0;
+    let birdTime = 0;
+
     function loop() {
-      time += 0.003 * speedMultiplier;
-      drawSky(time);
+      skyTime += 0.001 * speedMultiplier;
+      birdTime += 0.005 * speedMultiplier;
+      drawSky(skyTime);
 
       const cx = vw / 2, cy = vh / 2;
       const rx = vw * 0.35, ry = vh * 0.25;
-      const birdX = cx + Math.cos(time) * rx;
-      const birdY = cy + Math.sin(time * 2) * ry;
-      const goingRight = Math.sin(time) < 0;
-      const goingUp = Math.cos(time * 2) < 0;
+      const birdX = cx + Math.cos(birdTime) * rx;
+      const birdY = cy + Math.sin(birdTime * 2) * ry;
+      const goingRight = Math.sin(birdTime) < 0;
+      const goingUp = Math.cos(birdTime * 2) < 0;
       const tilt = goingUp ? -10 : 10;
       const scaleX = goingRight ? 1 : -1;
 

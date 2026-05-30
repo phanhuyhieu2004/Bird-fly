@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bird Fly - Relax</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -11,7 +13,8 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: 'Georgia', serif;
+      font-family: 'Quicksand', sans-serif;
+      cursor: default;
     }
 
     #sky-canvas {
@@ -19,6 +22,14 @@
       top: 0; left: 0;
       width: 100%; height: 100%;
       z-index: 0;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
     }
 
     .clouds {
@@ -31,29 +42,29 @@
 
     .cloud {
       position: absolute;
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.5);
       border-radius: 50%;
     }
     .cloud::before, .cloud::after {
       content: '';
       position: absolute;
-      background: rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.5);
       border-radius: 50%;
     }
 
-    .cloud-1 { width: 140px; height: 50px; top: 12%; animation: drift1 60s linear infinite; }
+    .cloud-1 { width: 140px; height: 50px; top: 10%; animation: drift1 70s linear infinite; }
     .cloud-1::before { width: 70px; height: 65px; top: -32px; left: 25px; }
     .cloud-1::after { width: 90px; height: 50px; top: -20px; left: 60px; }
 
-    .cloud-2 { width: 180px; height: 65px; top: 22%; animation: drift2 80s linear infinite 10s; }
+    .cloud-2 { width: 180px; height: 65px; top: 20%; animation: drift2 90s linear infinite 8s; }
     .cloud-2::before { width: 90px; height: 75px; top: -38px; left: 35px; }
     .cloud-2::after { width: 110px; height: 65px; top: -28px; left: 80px; }
 
-    .cloud-3 { width: 110px; height: 42px; top: 32%; animation: drift3 70s linear infinite 20s; }
+    .cloud-3 { width: 110px; height: 42px; top: 30%; animation: drift3 80s linear infinite 18s; }
     .cloud-3::before { width: 55px; height: 55px; top: -27px; left: 18px; }
     .cloud-3::after { width: 75px; height: 42px; top: -16px; left: 45px; }
 
-    .cloud-4 { width: 130px; height: 48px; top: 18%; animation: drift1 90s linear infinite 30s; }
+    .cloud-4 { width: 130px; height: 48px; top: 15%; animation: drift1 100s linear infinite 28s; }
     .cloud-4::before { width: 65px; height: 60px; top: -30px; left: 22px; }
     .cloud-4::after { width: 85px; height: 48px; top: -18px; left: 55px; }
 
@@ -74,7 +85,7 @@
       width: 180px;
       height: 180px;
       z-index: 4;
-      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.12));
+      filter: drop-shadow(0 8px 20px rgba(0,0,0,0.15));
     }
 
     #rive-canvas {
@@ -85,47 +96,165 @@
       pointer-events: none;
     }
 
-    #particle-canvas {
+    .controls {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 1;
+      bottom: 25px;
+      right: 25px;
+      display: flex;
+      gap: 12px;
+      z-index: 20;
     }
 
-    .sound-btn {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 50px;
-      height: 50px;
+    .ctrl-btn {
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.5);
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       color: white;
-      font-size: 22px;
+      font-size: 20px;
       cursor: pointer;
-      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
-    .sound-btn:hover { background: rgba(255,255,255,0.3); }
+    .ctrl-btn:hover {
+      background: rgba(255,255,255,0.28);
+      transform: scale(1.08);
+    }
+    .ctrl-btn:active { transform: scale(0.95); }
 
-    .time-text {
+    .title-overlay {
       position: fixed;
-      bottom: 35px;
-      left: 30px;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    .title-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .title-overlay h1 {
+      font-size: 3rem;
+      font-weight: 300;
+      color: white;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+
+    .title-overlay p {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 4px;
+      margin-bottom: 50px;
+    }
+
+    .start-btn {
+      padding: 14px 48px;
+      border: 2px solid rgba(255,255,255,0.5);
+      border-radius: 40px;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .start-btn:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .cute-emoji {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .now-playing {
+      position: fixed;
+      top: 25px;
+      left: 25px;
       color: rgba(255,255,255,0.5);
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       letter-spacing: 2px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .now-playing.show { opacity: 1; }
+
+    .now-playing .bars {
+      display: flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 14px;
+    }
+    .now-playing .bar {
+      width: 3px;
+      background: rgba(255,255,255,0.5);
+      border-radius: 2px;
+      animation: barPulse 0.8s ease-in-out infinite alternate;
+    }
+    .now-playing .bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+    .now-playing .bar:nth-child(2) { height: 10px; animation-delay: 0.15s; }
+    .now-playing .bar:nth-child(3) { height: 4px; animation-delay: 0.3s; }
+    .now-playing .bar:nth-child(4) { height: 12px; animation-delay: 0.45s; }
+
+    @keyframes barPulse {
+      0% { transform: scaleY(0.5); }
+      100% { transform: scaleY(1.2); }
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.35);
+      font-size: 0.7rem;
+      letter-spacing: 3px;
       z-index: 10;
     }
   </style>
 </head>
 <body>
+  <div class="title-overlay" id="overlay">
+    <div class="cute-emoji">&#127912;</div>
+    <h1>Bird Fly</h1>
+    <p>relax &amp; enjoy</p>
+    <button class="start-btn" id="start-btn">BAY NAO</button>
+  </div>
+
   <canvas id="sky-canvas"></canvas>
   <canvas id="particle-canvas"></canvas>
 
@@ -140,8 +269,21 @@
   <canvas id="bird-canvas"></canvas>
   <canvas id="rive-canvas"></canvas>
 
-  <div class="time-text" id="time-text"></div>
-  <button class="sound-btn" id="sound-btn" title="Toggle ambient sound">&#9835;</button>
+  <div class="now-playing" id="now-playing">
+    <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+    <span>Now Playing</span>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="music-btn" title="Toggle music">&#9835;</button>
+    <button class="ctrl-btn" id="speed-btn" title="Change speed" style="font-size:14px;">1x</button>
+  </div>
+
+  <div class="hint">hover anywhere for magic</div>
+
+  <audio id="bgm" loop preload="auto">
+    <source src="Arena%20of%20Valor%20-%20%E5%82%B3%E8%AA%AA%E5%B0%8D%E6%B1%BA%20_%20HERO%20MUSIC%20_%20Dolia%20_%20Original%20Sound%20Track%20%5BnZagrNVWnVo%5D.mp3" type="audio/mpeg">
+  </audio>
 
   <script src="https://unpkg.com/@rive-app/canvas/rive.js"></script>
   <script>
@@ -172,6 +314,7 @@
     const vh = window.innerHeight;
     let time = 0;
     let bgColor = null;
+    let speedMultiplier = 1;
 
     new rive.Rive({
       src: 'birdfly.riv',
@@ -197,15 +340,14 @@
 
     function drawSky(t) {
       const w = skyCanvas.width, h = skyCanvas.height;
-
       const cycle = t % 1;
 
       const topColors = [
-        [25, 25, 80],    // night
-        [135, 206, 235], // morning
-        [100, 180, 255], // noon
-        [255, 150, 80],  // sunset
-        [25, 25, 80],    // night
+        [25, 25, 80],
+        [135, 206, 235],
+        [100, 180, 255],
+        [255, 150, 80],
+        [25, 25, 80],
       ];
       const botColors = [
         [15, 15, 40],
@@ -233,14 +375,27 @@
 
       if (cycle > 0.15 && cycle < 0.85) {
         const sunAlpha = Math.sin((cycle - 0.15) / 0.7 * Math.PI) * 0.8;
-        const sunGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+        const sunGrad = skyCtx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 70);
         sunGrad.addColorStop(0, 'rgba(255,255,200,' + sunAlpha + ')');
         sunGrad.addColorStop(0.3, 'rgba(255,200,100,' + (sunAlpha * 0.5) + ')');
         sunGrad.addColorStop(1, 'rgba(255,150,50,0)');
         skyCtx.fillStyle = sunGrad;
         skyCtx.beginPath();
-        skyCtx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+        skyCtx.arc(sunX, sunY, 70, 0, Math.PI * 2);
         skyCtx.fill();
+      }
+
+      if (cycle < 0.15 || cycle > 0.8) {
+        const stars = 60;
+        for (let i = 0; i < stars; i++) {
+          const sx = (Math.sin(i * 127.1) * 0.5 + 0.5) * w;
+          const sy = (Math.sin(i * 311.7) * 0.5 + 0.5) * h * 0.6;
+          const sa = (Math.sin(time * 2 + i) * 0.3 + 0.5) * 0.6;
+          skyCtx.fillStyle = 'rgba(255,255,230,' + sa + ')';
+          skyCtx.beginPath();
+          skyCtx.arc(sx, sy, 1.2, 0, Math.PI * 2);
+          skyCtx.fill();
+        }
       }
 
       const mY = h * 0.75;
@@ -267,18 +422,39 @@
 
     const birdParticles = [];
     const floatingParticles = [];
+    let mouseX = vw / 2, mouseY = vh / 2;
+    let useMouseControl = false;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      mouseX = e.touches[0].clientX;
+      mouseY = e.touches[0].clientY;
+    });
 
     function loop() {
-      time += 0.003;
+      time += 0.003 * speedMultiplier;
       drawSky(time);
 
-      const cx = vw / 2;
-      const cy = vh / 2;
-      const rx = vw * 0.35;
-      const ry = vh * 0.25;
+      let birdX, birdY;
 
-      const birdX = cx + Math.cos(time) * rx;
-      const birdY = cy + Math.sin(time * 2) * ry;
+      if (useMouseControl) {
+        const targetX = mouseX;
+        const targetY = mouseY;
+        birdX = vw / 2 + (targetX - vw / 2) * 0.15;
+        birdY = vh / 2 + (targetY - vh / 2) * 0.15;
+      } else {
+        const cx = vw / 2;
+        const cy = vh / 2;
+        const rx = vw * 0.35;
+        const ry = vh * 0.25;
+        birdX = cx + Math.cos(time) * rx;
+        birdY = cy + Math.sin(time * 2) * ry;
+      }
+
       const goingRight = Math.sin(time) < 0;
       const goingUp = Math.cos(time * 2) < 0;
       const tilt = goingUp ? -10 : 10;
@@ -368,59 +544,44 @@
     }
     requestAnimationFrame(loop);
 
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    let audioCtx, soundOn = false;
-    let windNode, chirpInterval;
+    const bgm = document.getElementById('bgm');
+    bgm.volume = 0.5;
+    let musicOn = false;
 
-    function createWind() {
-      audioCtx = new AudioCtx();
-      const bufferSize = 2 * audioCtx.sampleRate;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.03;
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('overlay').classList.add('hidden');
+      bgm.play().then(() => {
+        musicOn = true;
+        document.getElementById('music-btn').innerHTML = '&#9834;';
+        document.getElementById('now-playing').classList.add('show');
+      }).catch(() => {});
+    });
 
-      windNode = audioCtx.createBufferSource();
-      windNode.buffer = buffer;
-      windNode.loop = true;
-
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 400;
-
-      const gain = audioCtx.createGain();
-      gain.gain.value = 0.15;
-
-      windNode.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
-      windNode.start();
-
-      chirpInterval = setInterval(() => {
-        if (!soundOn) return;
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 1800 + Math.random() * 1200;
-        g.gain.setValueAtTime(0.04, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.3);
-      }, 2000 + Math.random() * 3000);
-    }
-
-    document.getElementById('sound-btn').addEventListener('click', () => {
-      if (!audioCtx) createWind();
-      soundOn = !soundOn;
-      if (soundOn) {
-        audioCtx.resume();
-        document.getElementById('sound-btn').innerHTML = '&#9834;';
+    document.getElementById('music-btn').addEventListener('click', () => {
+      if (musicOn) {
+        bgm.pause();
+        musicOn = false;
+        document.getElementById('music-btn').innerHTML = '&#9835;';
+        document.getElementById('now-playing').classList.remove('show');
       } else {
-        audioCtx.suspend();
-        document.getElementById('sound-btn').innerHTML = '&#9835;';
+        bgm.play().then(() => {
+          musicOn = true;
+          document.getElementById('music-btn').innerHTML = '&#9834;';
+          document.getElementById('now-playing').classList.add('show');
+        }).catch(() => {});
       }
     });
+
+    const speeds = [0.5, 1, 1.5, 2];
+    let speedIdx = 1;
+    document.getElementById('speed-btn').addEventListener('click', () => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      speedMultiplier = speeds[speedIdx];
+      document.getElementById('speed-btn').textContent = speeds[speedIdx] + 'x';
+    });
+
+    document.addEventListener('mouseenter', () => { useMouseControl = false; });
+    document.addEventListener('mouseleave', () => { useMouseControl = false; });
   </script>
 </body>
 </html>

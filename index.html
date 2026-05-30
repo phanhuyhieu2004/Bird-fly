@@ -105,6 +105,13 @@
       filter: drop-shadow(0 8px 20px rgba(0,0,0,0.15));
     }
 
+    @media (max-width: 600px) {
+      #bird-canvas {
+        width: 120px;
+        height: 120px;
+      }
+    }
+
     #rive-canvas {
       position: fixed;
       width: 180px;
@@ -167,9 +174,12 @@
       font-family: 'Quicksand', sans-serif;
     }
     .action-btn:hover .tip { opacity: 1; }
+
+    /* Prevent selection */
+    body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
   <canvas id="sky-canvas"></canvas>
   <canvas id="particle-canvas"></canvas>
   <canvas id="click-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15;"></canvas>
@@ -204,18 +214,33 @@
 
   <script src="https://unpkg.com/@rive-app/canvas/rive.js"></script>
   <script>
+    // Anti view-source / copy
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'i' || e.key === 'I' || e.key === 'j' || e.key === 'J')) {
+        e.preventDefault();
+      }
+      if (e.key === 'F12') e.preventDefault();
+    });
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'PrintScreen') {
+        navigator.clipboard.writeText('');
+      }
+    });
+
     const bgm = document.getElementById('bgm');
     bgm.volume = 0.5;
 
-    bgm.play().catch(() => {
-      const tryPlay = () => {
-        bgm.play().catch(() => {});
-        document.removeEventListener('click', tryPlay);
-        document.removeEventListener('touchstart', tryPlay);
-      };
-      document.addEventListener('click', tryPlay);
-      document.addEventListener('touchstart', tryPlay);
-    });
+    const playAudio = () => {
+      bgm.play().then(() => {
+        document.removeEventListener('click', playAudio);
+        document.removeEventListener('touchstart', playAudio);
+        document.removeEventListener('keydown', playAudio);
+      }).catch(() => {});
+    };
+    playAudio();
+    document.addEventListener('click', playAudio);
+    document.addEventListener('touchstart', playAudio);
+    document.addEventListener('keydown', playAudio);
 
     const skyCanvas = document.getElementById('sky-canvas');
     const skyCtx = skyCanvas.getContext('2d');
@@ -228,20 +253,24 @@
     const riveCanvas = document.getElementById('rive-canvas');
 
     function resize() {
-      skyCanvas.width = particleCanvas.width = trailCanvas.width = window.innerWidth;
-      skyCanvas.height = particleCanvas.height = trailCanvas.height = window.innerHeight;
+      skyCanvas.width = particleCanvas.width = trailCanvas.width = clickCanvas.width = window.innerWidth;
+      skyCanvas.height = particleCanvas.height = trailCanvas.height = clickCanvas.height = window.innerHeight;
+      vw = window.innerWidth;
+      vh = window.innerHeight;
     }
     resize();
     window.addEventListener('resize', resize);
 
-    const SIZE = 400;
+    const SIZE = Math.min(400, Math.max(120, window.innerWidth * 0.25));
     birdCanvas.width = SIZE;
     birdCanvas.height = SIZE;
     riveCanvas.width = SIZE;
     riveCanvas.height = SIZE;
+    birdCanvas.style.width = SIZE * 0.45 + 'px';
+    birdCanvas.style.height = SIZE * 0.45 + 'px';
 
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    let vw = window.innerWidth;
+    let vh = window.innerHeight;
     let time = 0;
     let bgColor = null;
     let speedMultiplier = 1;
@@ -1092,12 +1121,19 @@
     });
 
     // Speed button
-    const speeds = [0.5, 1, 1.5, 2];
-    let speedIdx = 1;
+    const speeds = [
+      { val: 0.3, label: 'Cham' },
+      { val: 0.7, label: 'Vua' },
+      { val: 1, label: 'BinhThuong' },
+      { val: 1.5, label: 'Nhanh' },
+      { val: 2.5, label: 'RatNhanh' },
+    ];
+    let speedIdx = 2;
+    speedMultiplier = speeds[speedIdx].val;
     document.getElementById('speed-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       speedIdx = (speedIdx + 1) % speeds.length;
-      speedMultiplier = speeds[speedIdx];
+      speedMultiplier = speeds[speedIdx].val;
     });
 
     function drawFlock() {
@@ -1120,8 +1156,8 @@
         const ty = by + Math.cos(offsetAngle * 3) * spreadY * 0.6;
 
         // Smooth follow
-        b.vx += (tx - b.x) * 0.02;
-        b.vy += (ty - b.y) * 0.02;
+        b.vx += (tx - b.x) * 0.02 * speedMultiplier;
+        b.vy += (ty - b.y) * 0.02 * speedMultiplier;
 
         // Separation
         flockBirds.forEach((other, j) => {

@@ -251,6 +251,8 @@
     const birdCanvas = document.getElementById('bird-canvas');
     const birdCtx = birdCanvas.getContext('2d');
     const riveCanvas = document.getElementById('rive-canvas');
+    const clickCanvas = document.getElementById('click-canvas');
+    const clickCtx = clickCanvas.getContext('2d');
 
     function resize() {
       skyCanvas.width = particleCanvas.width = trailCanvas.width = clickCanvas.width = window.innerWidth;
@@ -1256,9 +1258,6 @@
         });
       }
     });
-
-    const clickCanvas = document.getElementById('click-canvas');
-    const clickCtx = clickCanvas.getContext('2d');
 
     function animateClickParticles() {
       clickCanvas.width = vw;

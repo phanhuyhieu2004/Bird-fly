@@ -174,12 +174,9 @@
       font-family: 'Quicksand', sans-serif;
     }
     .action-btn:hover .tip { opacity: 1; }
-
-    /* Prevent selection */
-    body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
   </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
   <canvas id="sky-canvas"></canvas>
   <canvas id="particle-canvas"></canvas>
   <canvas id="click-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:15;"></canvas>
@@ -214,19 +211,6 @@
 
   <script src="https://unpkg.com/@rive-app/canvas/rive.js"></script>
   <script>
-    // Anti view-source / copy
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'i' || e.key === 'I' || e.key === 'j' || e.key === 'J')) {
-        e.preventDefault();
-      }
-      if (e.key === 'F12') e.preventDefault();
-    });
-    document.addEventListener('keyup', (e) => {
-      if (e.key === 'PrintScreen') {
-        navigator.clipboard.writeText('');
-      }
-    });
-
     const bgm = document.getElementById('bgm');
     bgm.volume = 0.5;
 

@@ -112,32 +112,54 @@
       pointer-events: none;
     }
 
-    .speed-btn {
+    .btn-panel {
       position: fixed;
-      bottom: 25px;
-      right: 25px;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .action-btn {
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.1);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: white;
-      font-size: 14px;
+      font-size: 18px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-      z-index: 20;
+      position: relative;
     }
-    .speed-btn:hover {
-      background: rgba(255,255,255,0.28);
-      transform: scale(1.08);
+    .action-btn:hover {
+      background: rgba(255,255,255,0.25);
+      transform: scale(1.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
-    .speed-btn:active { transform: scale(0.95); }
+    .action-btn:active { transform: scale(0.92); }
+    .action-btn .tip {
+      position: absolute;
+      right: 58px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .action-btn:hover .tip { opacity: 1; }
   </style>
 </head>
 <body>
@@ -160,7 +182,14 @@
   <canvas id="bird-canvas"></canvas>
   <canvas id="rive-canvas"></canvas>
 
-  <button class="speed-btn" id="speed-btn" title="Change speed">1x</button>
+  <div class="btn-panel">
+    <button class="action-btn" id="spin-btn" title="Bird spin">&#x1F3B2;<span class="tip">Xoay chim</span></button>
+    <button class="action-btn" id="burst-btn" title="Fireworks">&#x1F386;<span class="tip">Pháo hoa</span></button>
+    <button class="action-btn" id="flock-btn" title="Flock">&#x1F426;<span class="tip">Bầy chim</span></button>
+    <button class="action-btn" id="rain-btn" title="Rain">&#x1F327;<span class="tip">Mưa</span></button>
+    <button class="action-btn" id="time-btn" title="Jump time">&#x23ED;<span class="tip">Chuyển thời gian</span></button>
+    <button class="action-btn" id="speed-btn" title="Speed">&#x26A1;<span class="tip">Tốc độ</span></button>
+  </div>
 
   <audio id="bgm" loop autoplay preload="auto">
     <source src="Arena%20of%20Valor%20-%20%E5%82%B3%E8%AA%AA%E5%B0%8D%E6%B1%BA%20_%20HERO%20MUSIC%20_%20Dolia%20_%20Original%20Sound%20Track%20%5BnZagrNVWnVo%5D.mp3" type="audio/mpeg">
@@ -828,6 +857,8 @@
       skyTime += 0.001 * speedMultiplier;
       birdTime += 0.005 * speedMultiplier;
       drawSky(skyTime);
+      drawRain();
+      drawFlock();
 
       const cx = vw / 2, cy = vh / 2;
       const rx = vw * 0.35, ry = vh * 0.25;
@@ -964,11 +995,147 @@
 
     const speeds = [0.5, 1, 1.5, 2];
     let speedIdx = 1;
-    document.getElementById('speed-btn').addEventListener('click', () => {
+    const speedIcon = document.getElementById('speed-btn');
+    speedIcon.addEventListener('click', () => {
       speedIdx = (speedIdx + 1) % speeds.length;
       speedMultiplier = speeds[speedIdx];
-      document.getElementById('speed-btn').textContent = speeds[speedIdx] + 'x';
+      speedIcon.querySelector('.tip').textContent = 'Toc do ' + speeds[speedIdx] + 'x';
     });
+
+    // Spin button
+    document.getElementById('spin-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      birdSpin = Math.PI * 4;
+      birdBounce = 20;
+      const cx2 = vw / 2, cy2 = vh / 2;
+      const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
+      const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
+      for (let i = 0; i < 30; i++) {
+        const angle = (i / 30) * Math.PI * 2;
+        const speed = 2 + Math.random() * 3;
+        birdBurstParticles.push({
+          x: bx, y: by,
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          size: 2 + Math.random() * 3, alpha: 1, life: 1,
+          color: '255,220,100',
+        });
+      }
+    });
+
+    // Fireworks button
+    document.getElementById('burst-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      for (let b = 0; b < 3; b++) {
+        setTimeout(() => {
+          const fx = vw * 0.2 + Math.random() * vw * 0.6;
+          const fy = vh * 0.15 + Math.random() * vh * 0.35;
+          const colors = ['255,100,100','100,255,100','100,100,255','255,255,100','255,100,255','100,255,255'];
+          const c = colors[Math.floor(Math.random() * colors.length)];
+          for (let i = 0; i < 35; i++) {
+            const angle = (i / 35) * Math.PI * 2;
+            const speed = 1 + Math.random() * 4;
+            clickParticles.push({
+              x: fx, y: fy,
+              vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+              size: 2 + Math.random() * 3, alpha: 1, life: 1,
+              color: c,
+            });
+          }
+        }, b * 400);
+      }
+    });
+
+    // Flock button
+    let flockActive = false;
+    let flockBirds = [];
+    document.getElementById('flock-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (flockActive) {
+        flockActive = false;
+        flockBirds = [];
+        return;
+      }
+      flockActive = true;
+      for (let i = 0; i < 6; i++) {
+        flockBirds.push({
+          x: Math.random() * vw,
+          y: vh * 0.2 + Math.random() * vh * 0.3,
+          vx: (Math.random() - 0.5) * 2,
+          vy: (Math.random() - 0.5) * 1,
+          wingPhase: Math.random() * Math.PI * 2,
+        });
+      }
+    });
+
+    // Rain button
+    let rainActive = false;
+    let rainDrops = [];
+    document.getElementById('rain-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      rainActive = !rainActive;
+      rainDrops = [];
+    });
+
+    // Time jump button
+    document.getElementById('time-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      skyTime += 0.25;
+    });
+
+    // Rain + flock rendering in loop
+    function drawFlock() {
+      if (!flockActive) return;
+      const cx2 = vw / 2, cy2 = vh / 2;
+      const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
+      const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
+      flockBirds.forEach(b => {
+        const dx = bx - b.x, dy = by - b.y;
+        const dist = Math.hypot(dx, dy);
+        b.vx += dx / dist * 0.02;
+        b.vy += dy / dist * 0.02;
+        b.vx += (Math.random() - 0.5) * 0.1;
+        b.vy += (Math.random() - 0.5) * 0.1;
+        b.vx *= 0.98; b.vy *= 0.98;
+        b.x += b.vx; b.y += b.vy;
+        b.wingPhase += 0.2;
+        const wingY = Math.sin(b.wingPhase) * 5;
+        const bSize = 4;
+        skyCtx.strokeStyle = 'rgba(50,50,60,0.5)';
+        skyCtx.lineWidth = 1.2;
+        skyCtx.beginPath();
+        skyCtx.moveTo(b.x - bSize * 2, b.y + wingY);
+        skyCtx.quadraticCurveTo(b.x - bSize, b.y - Math.abs(wingY) * 0.5, b.x, b.y);
+        skyCtx.quadraticCurveTo(b.x + bSize, b.y - Math.abs(wingY) * 0.5, b.x + bSize * 2, b.y + wingY);
+        skyCtx.stroke();
+      });
+    }
+
+    function drawRain() {
+      if (!rainActive) return;
+      for (let i = 0; i < 3; i++) {
+        rainDrops.push({
+          x: Math.random() * vw, y: -10,
+          speed: 8 + Math.random() * 6,
+          length: 15 + Math.random() * 10,
+          alpha: 0.15 + Math.random() * 0.15,
+        });
+      }
+      if (rainDrops.length > 200) rainDrops.splice(0, rainDrops.length - 200);
+      skyCtx.strokeStyle = 'rgba(180,200,255,0.3)';
+      skyCtx.lineWidth = 1;
+      for (let i = rainDrops.length - 1; i >= 0; i--) {
+        const d = rainDrops[i];
+        d.y += d.speed;
+        d.x -= 1;
+        if (d.y > vh) { rainDrops.splice(i, 1); continue; }
+        skyCtx.globalAlpha = d.alpha;
+        skyCtx.beginPath();
+        skyCtx.moveTo(d.x, d.y);
+        skyCtx.lineTo(d.x + 1, d.y + d.length);
+        skyCtx.stroke();
+      }
+      skyCtx.globalAlpha = 1;
+    }
 
     const clickParticles = [];
     document.addEventListener('click', (e) => {

@@ -202,7 +202,7 @@
     <button class="action-btn" id="flock-btn"><i class="fas fa-dove"></i><span class="tip">Bầy chim</span></button>
     <button class="action-btn" id="rain-btn"><i class="fas fa-cloud-rain"></i><span class="tip">Mưa</span></button>
     <button class="action-btn" id="time-btn"><i class="fas fa-forward"></i><span class="tip">Chuyển thời gian</span></button>
-    <button class="action-btn" id="speed-btn"><i class="fas fa-bolt"></i><span class="tip">Tốc độ</span></button>
+    <button class="action-btn" id="speed-btn"><span id="speed-label" style="font-size:11px;font-weight:600;">1x</span><span class="tip">Tốc độ</span></button>
   </div>
 
   <audio id="bgm" loop autoplay preload="auto">
@@ -1120,6 +1120,7 @@
       e.stopPropagation();
       speedIdx = (speedIdx + 1) % speeds.length;
       speedMultiplier = speeds[speedIdx].val;
+      document.getElementById('speed-label').textContent = speeds[speedIdx].label;
     });
 
     function drawFlock() {

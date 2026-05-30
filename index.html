@@ -1060,11 +1060,13 @@
         const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
         const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
         for (let i = 0; i < 10; i++) {
+          const angle = (i / 10) * Math.PI * 2;
+          const spread = 120 + Math.random() * 80;
           flockBirds.push({
-            x: bx + (Math.random() - 0.5) * 100,
-            y: by + (Math.random() - 0.5) * 80,
-            vx: (Math.random() - 0.5) * 4,
-            vy: (Math.random() - 0.5) * 3,
+            x: bx + Math.cos(angle) * spread,
+            y: by + Math.sin(angle) * spread,
+            vx: Math.cos(angle) * 2 + (Math.random() - 0.5) * 2,
+            vy: Math.sin(angle) * 2 + (Math.random() - 0.5) * 2,
             scale: 0.3 + Math.random() * 0.5,
             tilt: 0,
           });
@@ -1104,21 +1106,38 @@
       const bx = cx2 + Math.cos(birdTime) * vw * 0.35;
       const by = cy2 + Math.sin(birdTime * 2) * vh * 0.25;
 
-      flockBirds.forEach(b => {
+      flockBirds.forEach((b, i) => {
+        // Follow leader loosely
         const dx = bx - b.x, dy = by - b.y;
         const dist = Math.hypot(dx, dy) || 1;
-        b.vx += dx / dist * 0.08;
-        b.vy += dy / dist * 0.08;
-        b.vx += (Math.random() - 0.5) * 0.6;
-        b.vy += (Math.random() - 0.5) * 0.5;
-        b.vx *= 0.96; b.vy *= 0.96;
-        b.x += b.vx; b.y += b.vy;
-        if (b.x < -50) b.x = vw + 50;
-        if (b.x > vw + 50) b.x = -50;
-        if (b.y < -50) b.y = vh + 50;
-        if (b.y > vh + 50) b.y = -50;
+        b.vx += dx / dist * 0.04;
+        b.vy += dy / dist * 0.04;
 
-        b.tilt += ((b.vy * 3) - b.tilt) * 0.1;
+        // Separation - push away from other birds
+        flockBirds.forEach((other, j) => {
+          if (i === j) return;
+          const sx = b.x - other.x, sy = b.y - other.y;
+          const sd = Math.hypot(sx, sy) || 1;
+          if (sd < 120) {
+            const force = (120 - sd) / 120 * 0.8;
+            b.vx += (sx / sd) * force;
+            b.vy += (sy / sd) * force;
+          }
+        });
+
+        // Random wander
+        b.vx += (Math.random() - 0.5) * 0.8;
+        b.vy += (Math.random() - 0.5) * 0.6;
+        b.vx *= 0.95; b.vy *= 0.95;
+        b.x += b.vx; b.y += b.vy;
+
+        // Wrap around screen
+        if (b.x < -60) b.x = vw + 60;
+        if (b.x > vw + 60) b.x = -60;
+        if (b.y < -60) b.y = vh + 60;
+        if (b.y > vh + 60) b.y = -60;
+
+        b.tilt += ((b.vy * 2) - b.tilt) * 0.08;
         const scaleX = b.vx > 0 ? 1 : -1;
 
         skyCtx.save();

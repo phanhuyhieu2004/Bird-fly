@@ -1137,7 +1137,7 @@
         if (b.y < -60) b.y = vh + 60;
         if (b.y > vh + 60) b.y = -60;
 
-        b.tilt += ((b.vy * 2) - b.tilt) * 0.08;
+        b.tilt = Math.atan2(b.vy, Math.abs(b.vx)) * 30;
         const scaleX = b.vx > 0 ? 1 : -1;
 
         skyCtx.save();

@@ -1108,13 +1108,13 @@
 
     // Speed button
     const speeds = [
-      { val: 0.3, label: 'Cham' },
-      { val: 0.7, label: 'Vua' },
-      { val: 1, label: 'BinhThuong' },
-      { val: 1.5, label: 'Nhanh' },
-      { val: 2.5, label: 'RatNhanh' },
+      { val: 1, label: '1x' },
+      { val: 2, label: '2x' },
+      { val: 3, label: '3x' },
+      { val: 4, label: '4x' },
+      { val: 5, label: '5x' },
     ];
-    let speedIdx = 2;
+    let speedIdx = 0;
     speedMultiplier = speeds[speedIdx].val;
     document.getElementById('speed-btn').addEventListener('click', (e) => {
       e.stopPropagation();

@@ -95,16 +95,10 @@
       pointer-events: none;
     }
 
-    .controls {
+    .speed-btn {
       position: fixed;
       bottom: 25px;
       right: 25px;
-      display: flex;
-      gap: 12px;
-      z-index: 20;
-    }
-
-    .ctrl-btn {
       width: 48px;
       height: 48px;
       border-radius: 50%;
@@ -113,54 +107,20 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: white;
-      font-size: 20px;
+      font-size: 14px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
       box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      z-index: 20;
     }
-    .ctrl-btn:hover {
+    .speed-btn:hover {
       background: rgba(255,255,255,0.28);
       transform: scale(1.08);
     }
-    .ctrl-btn:active { transform: scale(0.95); }
-
-    .now-playing {
-      position: fixed;
-      top: 25px;
-      left: 25px;
-      color: rgba(255,255,255,0.5);
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .now-playing .bars {
-      display: flex;
-      gap: 2px;
-      align-items: flex-end;
-      height: 14px;
-    }
-    .now-playing .bar {
-      width: 3px;
-      background: rgba(255,255,255,0.5);
-      border-radius: 2px;
-      animation: barPulse 0.8s ease-in-out infinite alternate;
-    }
-    .now-playing .bar:nth-child(1) { height: 6px; animation-delay: 0s; }
-    .now-playing .bar:nth-child(2) { height: 10px; animation-delay: 0.15s; }
-    .now-playing .bar:nth-child(3) { height: 4px; animation-delay: 0.3s; }
-    .now-playing .bar:nth-child(4) { height: 12px; animation-delay: 0.45s; }
-
-    @keyframes barPulse {
-      0% { transform: scaleY(0.5); }
-      100% { transform: scaleY(1.2); }
-    }
+    .speed-btn:active { transform: scale(0.95); }
   </style>
 </head>
 <body>
@@ -178,15 +138,7 @@
   <canvas id="bird-canvas"></canvas>
   <canvas id="rive-canvas"></canvas>
 
-  <div class="now-playing" id="now-playing">
-    <div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-    <span>Now Playing</span>
-  </div>
-
-  <div class="controls">
-    <button class="ctrl-btn" id="music-btn" title="Toggle music">&#9835;</button>
-    <button class="ctrl-btn" id="speed-btn" title="Change speed" style="font-size:14px;">1x</button>
-  </div>
+  <button class="speed-btn" id="speed-btn" title="Change speed">1x</button>
 
   <audio id="bgm" loop autoplay preload="auto">
     <source src="Arena%20of%20Valor%20-%20%E5%82%B3%E8%AA%AA%E5%B0%8D%E6%B1%BA%20_%20HERO%20MUSIC%20_%20Dolia%20_%20Original%20Sound%20Track%20%5BnZagrNVWnVo%5D.mp3" type="audio/mpeg">
@@ -196,37 +148,15 @@
   <script>
     const bgm = document.getElementById('bgm');
     bgm.volume = 0.5;
-    let musicOn = true;
 
-    bgm.play().then(() => {
-      document.getElementById('now-playing').classList.add('show');
-    }).catch(() => {
-      musicOn = false;
+    bgm.play().catch(() => {
       const tryPlay = () => {
-        bgm.play().then(() => {
-          musicOn = true;
-          document.getElementById('now-playing').classList.add('show');
-        }).catch(() => {});
+        bgm.play().catch(() => {});
         document.removeEventListener('click', tryPlay);
         document.removeEventListener('touchstart', tryPlay);
       };
       document.addEventListener('click', tryPlay);
       document.addEventListener('touchstart', tryPlay);
-    });
-
-    document.getElementById('music-btn').addEventListener('click', () => {
-      if (musicOn) {
-        bgm.pause();
-        musicOn = false;
-        document.getElementById('music-btn').innerHTML = '&#9835;';
-        document.getElementById('now-playing').style.display = 'none';
-      } else {
-        bgm.play().then(() => {
-          musicOn = true;
-          document.getElementById('music-btn').innerHTML = '&#9834;';
-          document.getElementById('now-playing').style.display = '';
-        }).catch(() => {});
-      }
     });
 
     const skyCanvas = document.getElementById('sky-canvas');
